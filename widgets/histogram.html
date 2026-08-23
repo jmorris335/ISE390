@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tolerance Overshoot Histogram Widget</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* Plain & Soft Minimalist Design System */
+    :root {
+      --bg: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --border-subtle: #f1f5f9;
+      
+      --input-bg: #f8fafc;
+      --input-focus-border: #94a3b8;
+      
+      /* Plot bin colors */
+      --bar-color: #3b82f6;  /* Blue bins */
+      --bar-hover: #1e3a8a;  /* Deep navy highlight */
+      
+      --highlight-bg: #e0f2fe;
+      --highlight-border: #2563eb;
+      --highlight-text: #1e40af;
+
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 720px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    .section {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Collapsible Table Details & Summary */
+    .table-details {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      transition: all 0.2s ease;
+    }
+
+    .table-summary {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      cursor: pointer;
+      user-select: none;
+      list-style: none;
+      background: #ffffff;
+      transition: background-color 0.15s ease;
+    }
+
+    .table-summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .table-summary:hover {
+      background: var(--border-subtle);
+    }
+
+    .table-heading {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+
+    .collapse-icon {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      transition: transform 0.2s ease;
+    }
+
+    details[open] .collapse-icon {
+      transform: rotate(180deg);
+    }
+
+    /* Condensed Table Styling */
+    .table-wrapper {
+      padding: 0 10px 10px 10px;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 3px;
+    }
+
+    .data-table td {
+      padding: 0;
+    }
+
+    .cell-input {
+      width: 100%;
+      height: 26px;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      font-weight: 500;
+      text-align: center;
+      padding: 2px 4px;
+      outline: none;
+      transition: all 0.15s ease;
+      -webkit-appearance: none;
+      -moz-appearance: textfield;
+    }
+
+    .cell-input::-webkit-outer-spin-button,
+    .cell-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .cell-input:hover {
+      border-color: var(--input-focus-border);
+      background: #ffffff;
+    }
+
+    .cell-input:focus {
+      border-color: var(--input-focus-border);
+      background: #ffffff;
+      box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.2);
+    }
+
+    .cell-input.highlighted {
+      background: var(--highlight-bg) !important;
+      border-color: var(--highlight-border) !important;
+      color: var(--highlight-text) !important;
+      font-weight: 600;
+    }
+
+    /* Histogram Container */
+    .histogram-wrapper {
+      position: relative;
+      width: 100%;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    #histogram-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      overflow: visible;
+    }
+
+    /* Tooltip */
+    .histogram-tooltip {
+      position: absolute;
+      pointer-events: none;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 0.78rem;
+      color: var(--text);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      z-index: 10;
+      transition: opacity 0.1s ease;
+    }
+
+    .histogram-tooltip.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    /* Slider Section */
+    .slider-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding-top: 8px;
+    }
+
+    .slider {
+      width: 100%;
+      max-width: 480px;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 6px;
+      border-radius: 3px;
+      background: #e2e8f0;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 2px solid var(--bar-color);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+
+    .slider::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+      border-color: var(--bar-hover);
+    }
+
+    .slider::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 2px solid var(--bar-color);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+    }
+
+    /* Centered Bin Size Value Display */
+    .bin-value-centered {
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text);
+      background: var(--border-subtle);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 16px;
+      text-align: center;
+    }
+
+    /* SVG Element Styling & Plot Colors */
+    .histogram-bar {
+      fill: var(--bar-color);
+      transition: fill 0.15s ease;
+      cursor: pointer;
+    }
+
+    .histogram-bar:hover {
+      fill: var(--bar-hover);
+    }
+
+    .histogram-bar-text {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      fill: var(--text);
+      text-anchor: middle;
+      font-weight: 600;
+    }
+
+    .axis-line {
+      stroke: var(--border);
+      stroke-width: 1.5;
+    }
+
+    .grid-line {
+      stroke: var(--border-subtle);
+      stroke-dasharray: 3 3;
+    }
+
+    .tick-text {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      fill: var(--text-muted);
+      text-anchor: middle;
+    }
+
+    .axis-title {
+      font-family: var(--font-sans);
+      font-size: 14px;
+      font-weight: 600;
+      fill: var(--text);
+      text-anchor: middle;
+    }
+
+    .y-axis-title {
+      transform: rotate(-90deg);
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Collapsible Table Section -->
+    <section class="section">
+      <details id="table-details" class="table-details" open>
+        <summary class="table-summary">
+          <span class="table-heading">Tolerance Overshoot (mm)</span>
+          <span class="collapse-icon">&#9662;</span>
+        </summary>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <tbody id="table-body">
+              <!-- 10x4 condensed editable table -->
+            </tbody>
+          </table>
+        </div>
+      </details>
+    </section>
+
+    <!-- Vertical Histogram Section -->
+    <section class="section">
+      <div class="histogram-wrapper" id="histogram-wrapper">
+        <svg id="histogram-svg" viewBox="0 0 800 380" preserveAspectRatio="xMidYMid meet"></svg>
+        <div id="histogram-tooltip" class="histogram-tooltip hidden"></div>
+      </div>
+
+      <!-- Slider control below histogram -->
+      <div class="slider-wrapper">
+        <input type="range" id="bin-size-slider" min="0.1" max="2.5" step="0.1" value="0.5" class="slider">
+        <!-- Value of bin size displayed below slider in the center -->
+        <div class="bin-value-centered" id="bin-size-value">0.5 mm</div>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    /**
+     * Binning & Histogram Standalone Widget Script
+     */
+    const DEFAULT_DATA = [
+      [0.4, 1.2, 2.1, 3.5],
+      [0.8, 1.5, 2.2, 3.8],
+      [1.0, 1.7, 2.3, 4.0],
+      [1.1, 1.8, 2.5, 4.2],
+      [1.2, 1.9, 2.6, 4.5],
+      [1.3, 2.0, 2.7, 1.6],
+      [1.4, 2.0, 2.8, 1.8],
+      [1.5, 2.1, 3.0, 2.4],
+      [1.5, 2.1, 3.1, 2.9],
+      [0.6, 2.2, 3.4, 0.9]
+    ];
+
+    let dataset = [];
+    let currentBins = [];
+
+    const tableBody = document.getElementById('table-body');
+    const slider = document.getElementById('bin-size-slider');
+    const binSizeValueEl = document.getElementById('bin-size-value');
+    const histogramSvg = document.getElementById('histogram-svg');
+    const tooltipEl = document.getElementById('histogram-tooltip');
+
+    function init() {
+      dataset = DEFAULT_DATA.map(row => row.map(v => parseFloat(v.toFixed(1))));
+      renderTable();
+      setupEventListeners();
+      updateApp();
+    }
+
+    function renderTable() {
+      tableBody.innerHTML = '';
+      
+      dataset.forEach((row, rIdx) => {
+        const tr = document.createElement('tr');
+        
+        row.forEach((val, cIdx) => {
+          const td = document.createElement('td');
+          const input = document.createElement('input');
+          
+          input.type = 'number';
+          input.step = '0.1';
+          input.className = 'cell-input';
+          input.value = val.toFixed(1);
+          input.setAttribute('id', `cell-${rIdx}-${cIdx}`);
+          
+          input.addEventListener('input', (e) => {
+            let num = parseFloat(e.target.value);
+            if (isNaN(num)) num = 0.0;
+            dataset[rIdx][cIdx] = parseFloat(num.toFixed(1));
+            updateApp();
+          });
+          
+          input.addEventListener('blur', (e) => {
+            let num = parseFloat(e.target.value);
+            if (isNaN(num)) num = 0.0;
+            e.target.value = num.toFixed(1);
+            dataset[rIdx][cIdx] = parseFloat(num.toFixed(1));
+            updateApp();
+          });
+          
+          td.appendChild(input);
+          tr.appendChild(td);
+        });
+        
+        tableBody.appendChild(tr);
+      });
+    }
+
+    function setupEventListeners() {
+      slider.addEventListener('input', () => {
+        const val = parseFloat(slider.value).toFixed(1);
+        binSizeValueEl.textContent = `${val} mm`;
+        updateApp();
+      });
+    }
+
+    function updateApp() {
+      const flatData = dataset.flat();
+      const binSize = parseFloat(slider.value);
+      
+      if (flatData.length === 0) return;
+      const minVal = Math.min(...flatData);
+      const maxVal = Math.max(...flatData);
+      
+      currentBins = computeBins(flatData, binSize, minVal, maxVal);
+      renderHistogram(currentBins, minVal, maxVal);
+    }
+
+    function computeBins(flatData, binSize, minVal, maxVal) {
+      let startBoundary = Math.floor((minVal - 0.001) / binSize) * binSize;
+      startBoundary = parseFloat(startBoundary.toFixed(2));
+      
+      let bins = [];
+      let currentStart = startBoundary;
+      const safeBinSize = Math.max(0.05, binSize);
+
+      while (currentStart <= maxVal + 0.0001) {
+        let currentEnd = parseFloat((currentStart + safeBinSize).toFixed(2));
+        
+        let indices = [];
+        let values = [];
+        
+        flatData.forEach((val, i) => {
+          const isLastBin = currentEnd >= maxVal;
+          const inBin = isLastBin 
+            ? (val >= currentStart && val <= currentEnd + 0.0001)
+            : (val >= currentStart && val < currentEnd - 0.0001);
+
+          if (inBin) {
+            indices.push(i);
+            values.push(val);
+          }
+        });
+
+        bins.push({
+          start: currentStart,
+          end: currentEnd,
+          count: values.length,
+          values: values,
+          indices: indices
+        });
+
+        currentStart = currentEnd;
+        if (currentStart > maxVal + 0.0001) break;
+      }
+      
+      return bins;
+    }
+
+    function renderHistogram(bins, minVal, maxVal) {
+      const svg = histogramSvg;
+      svg.innerHTML = '';
+
+      const svgWidth = 800;
+      const svgHeight = 380;
+      const margin = { top: 35, right: 25, bottom: 55, left: 65 };
+      const plotWidth = svgWidth - margin.left - margin.right;
+      const plotHeight = svgHeight - margin.top - margin.bottom;
+
+      const maxCount = Math.max(...bins.map(b => b.count), 4);
+      const yMax = Math.ceil(maxCount * 1.12);
+
+      // Y Grid lines & tick text
+      const numYTicks = 4;
+      for (let i = 0; i <= numYTicks; i++) {
+        const countVal = Math.round((yMax / numYTicks) * i);
+        const yPos = margin.top + plotHeight - (countVal / yMax) * plotHeight;
+
+        const gridLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        gridLine.setAttribute('x1', margin.left);
+        gridLine.setAttribute('y1', yPos);
+        gridLine.setAttribute('x2', margin.left + plotWidth);
+        gridLine.setAttribute('y2', yPos);
+        gridLine.setAttribute('class', 'grid-line');
+        svg.appendChild(gridLine);
+
+        const yTick = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        yTick.setAttribute('x', margin.left - 10);
+        yTick.setAttribute('y', yPos + 4);
+        yTick.setAttribute('class', 'tick-text');
+        yTick.setAttribute('text-anchor', 'end');
+        yTick.textContent = countVal;
+        svg.appendChild(yTick);
+      }
+
+      // Y-Axis line & title (14px)
+      const yAxisLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      yAxisLine.setAttribute('x1', margin.left);
+      yAxisLine.setAttribute('y1', margin.top);
+      yAxisLine.setAttribute('x2', margin.left);
+      yAxisLine.setAttribute('y2', margin.top + plotHeight);
+      yAxisLine.setAttribute('class', 'axis-line');
+      svg.appendChild(yAxisLine);
+
+      const yTitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      yTitle.setAttribute('x', -(margin.top + plotHeight / 2));
+      yTitle.setAttribute('y', 20);
+      yTitle.setAttribute('class', 'axis-title y-axis-title');
+      yTitle.textContent = 'Frequency';
+      svg.appendChild(yTitle);
+
+      // X-Axis line & title (14px)
+      const xAxisLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      xAxisLine.setAttribute('x1', margin.left);
+      xAxisLine.setAttribute('y1', margin.top + plotHeight);
+      xAxisLine.setAttribute('x2', margin.left + plotWidth);
+      xAxisLine.setAttribute('y2', margin.top + plotHeight);
+      xAxisLine.setAttribute('class', 'axis-line');
+      svg.appendChild(xAxisLine);
+
+      const xTitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      xTitle.setAttribute('x', margin.left + plotWidth / 2);
+      xTitle.setAttribute('y', svgHeight - 10);
+      xTitle.setAttribute('class', 'axis-title');
+      xTitle.textContent = 'Tolerance Overshoot (mm)';
+      svg.appendChild(xTitle);
+
+      // Draw Bars
+      const numBins = bins.length;
+      if (numBins === 0) return;
+
+      const barGap = numBins > 15 ? 1 : 3;
+      const totalBarSpace = plotWidth / numBins;
+      const barWidth = Math.max(2, totalBarSpace - barGap);
+
+      bins.forEach((bin, idx) => {
+        const xPos = margin.left + idx * totalBarSpace + barGap / 2;
+        const barHeight = (bin.count / yMax) * plotHeight;
+        const yPos = margin.top + plotHeight - barHeight;
+
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', xPos);
+        rect.setAttribute('y', yPos);
+        rect.setAttribute('width', barWidth);
+        rect.setAttribute('height', barHeight);
+        rect.setAttribute('rx', 3);
+        rect.setAttribute('class', 'histogram-bar');
+
+        rect.addEventListener('mouseenter', (e) => {
+          highlightCells(bin.indices);
+          showTooltip(e, bin);
+        });
+
+        rect.addEventListener('mousemove', (e) => moveTooltip(e));
+
+        rect.addEventListener('mouseleave', () => {
+          clearCellHighlights();
+          hideTooltip();
+        });
+
+        svg.appendChild(rect);
+
+        // Count label on bar (12px)
+        if (bin.count > 0 && barWidth > 14) {
+          const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          label.setAttribute('x', xPos + barWidth / 2);
+          label.setAttribute('y', yPos - 6);
+          label.setAttribute('class', 'histogram-bar-text');
+          label.textContent = bin.count;
+          svg.appendChild(label);
+        }
+
+        // Tick labels (12px)
+        const labelStep = Math.ceil(numBins / 10);
+        if (idx % labelStep === 0 || idx === numBins - 1) {
+          const xTick = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          xTick.setAttribute('x', xPos + barWidth / 2);
+          xTick.setAttribute('y', margin.top + plotHeight + 18);
+          xTick.setAttribute('class', 'tick-text');
+          xTick.textContent = `${bin.start.toFixed(1)}`;
+          svg.appendChild(xTick);
+        }
+      });
+    }
+
+    function highlightCells(indices) {
+      clearCellHighlights();
+      indices.forEach(idx => {
+        const row = Math.floor(idx / 4);
+        const col = idx % 4;
+        const input = document.getElementById(`cell-${row}-${col}`);
+        if (input) input.classList.add('highlighted');
+      });
+    }
+
+    function clearCellHighlights() {
+      document.querySelectorAll('.cell-input').forEach(input => input.classList.remove('highlighted'));
+    }
+
+    function showTooltip(evt, bin) {
+      tooltipEl.innerHTML = `Bin: ${bin.start.toFixed(1)} &ndash; ${bin.end.toFixed(1)} mm &bull; Count: ${bin.count}`;
+      tooltipEl.classList.remove('hidden');
+      moveTooltip(evt);
+    }
+
+    function moveTooltip(evt) {
+      const wrapperRect = document.getElementById('histogram-wrapper').getBoundingClientRect();
+      tooltipEl.style.left = `${evt.clientX - wrapperRect.left + 10}px`;
+      tooltipEl.style.top = `${evt.clientY - wrapperRect.top - 35}px`;
+    }
+
+    function hideTooltip() {
+      tooltipEl.classList.add('hidden');
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
