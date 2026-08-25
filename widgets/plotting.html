@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Statistical Graphics Demo</title>
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #333333;
+      --grey-light: #f5f5f5;
+      --grey: #cccccc;
+      --soft-blue: #a3c4f3;
+      --navy-blue: #001f54;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .container {
+      width: 100%;
+      max-width: 900px;
+    }
+    .tabs {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid var(--grey-light);
+      padding-bottom: 10px;
+      justify-content: center;
+    }
+    .tab {
+      padding: 8px 24px;
+      cursor: pointer;
+      background-color: transparent;
+      color: var(--text);
+      border: 1px solid transparent;
+      border-radius: 4px;
+      font-size: 16px;
+      transition: all 0.2s;
+    }
+    .tab:hover {
+      background-color: var(--grey-light);
+    }
+    .tab.active {
+      background-color: var(--soft-blue);
+      color: var(--navy-blue);
+      border-color: var(--soft-blue);
+      font-weight: 600;
+    }
+    .plot-container {
+      width: 100%;
+      height: 450px;
+      margin-bottom: 25px;
+    }
+    .controls-container {
+      display: flex;
+      justify-content: center;
+      min-height: 70px;
+      margin-bottom: 40px;
+    }
+    .slider-group {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+    .slider-group.active {
+      display: flex;
+    }
+    .data-controls {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 35px;
+      justify-content: center;
+    }
+    .btn {
+      padding: 8px 16px;
+      cursor: pointer;
+      background-color: var(--bg);
+      border: 1px solid var(--grey);
+      border-radius: 4px;
+      color: var(--text);
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .btn:hover, .btn.active {
+      background-color: var(--navy-blue);
+      color: var(--bg);
+      border-color: var(--navy-blue);
+    }
+    .tables {
+      display: flex;
+      gap: 30px;
+    }
+    .table-col {
+      flex: 1;
+    }
+    h3 {
+      font-size: 16px;
+      text-align: center;
+      font-weight: normal;
+      margin-bottom: 15px;
+      color: var(--text);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    td {
+      border: 1px solid var(--grey);
+      padding: 4px;
+      text-align: center;
+      width: 20%;
+      transition: background-color 0.15s;
+    }
+    input {
+      width: 100%;
+      border: none;
+      text-align: center;
+      font-family: inherit;
+      font-size: 14px;
+      background: transparent;
+      color: inherit;
+      outline: none;
+      -moz-appearance: textfield;
+    }
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    td.highlight {
+      background-color: var(--navy-blue);
+      color: var(--bg);
+      border-color: var(--navy-blue);
+    }
+    td.highlight input {
+      color: var(--bg);
+    }
+    input[type="range"] {
+      width: 300px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="tabs">
+    <button class="tab active" id="tab-Histogram" onclick="switchTab('Histogram')">Histogram</button>
+    <button class="tab" id="tab-Boxplot" onclick="switchTab('Boxplot')">Boxplot</button>
+    <button class="tab" id="tab-Scatterplot" onclick="switchTab('Scatterplot')">Scatterplot</button>
+  </div>
+
+  <div id="plot" class="plot-container"></div>
+
+  <div class="controls-container">
+    <div id="hist-controls" class="slider-group active">
+      <div style="font-size: 13px; font-style: italic; color: #666; margin-bottom: 5px;">Click on the series in the legend to hide or show it in the plot</div>
+      <input type="range" id="bin-size" min="0.1" max="2.0" step="0.1" value="0.5" oninput="updateBinSize(this.value)">
+      <label for="bin-size">Bin Size (<span id="bin-size-val">0.5</span>)</label>
+    </div>
+    <div id="box-controls" class="slider-group">
+      <input type="range" id="outlier-thresh" min="0.1" max="4.0" step="0.1" value="1.5" oninput="updateOutlierThresh(this.value)">
+      <label for="outlier-thresh">Outlier Threshold (<span id="outlier-thresh-val">1.5</span>)</label>
+    </div>
+  </div>
+
+  <div class="data-controls">
+    <button class="btn active" id="btn-Normal" onclick="setDistribution('Normal')">Normal</button>
+    <button class="btn" id="btn-Bimodal" onclick="setDistribution('Bimodal')">Bimodal</button>
+    <button class="btn" id="btn-Uniform" onclick="setDistribution('Uniform')">Uniform</button>
+    <button class="btn" id="btn-Random" onclick="setDistribution('Random')">Random</button>
+  </div>
+
+  <div class="tables">
+    <div class="table-col">
+      <h3>Part A Deviation (mm)</h3>
+      <table id="tableA">
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="table-col">
+      <h3>Part B Deviation (mm)</h3>
+      <table id="tableB">
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentTab = 'Histogram';
+  let distribution = 'Normal';
+  let binSize = 0.5;
+  let outlierThreshold = 1.5;
+  
+  let dataA = [];
+  let dataB = [];
+  let histVisibleA = true;
+  let histVisibleB = true;
+
+  window.onload = () => {
+    generateData();
+    
+    const plotDiv = document.getElementById('plot');
+    plotDiv.on('plotly_hover', handleHover);
+    plotDiv.on('plotly_unhover', clearHighlights);
+    plotDiv.on('plotly_restyle', handleRestyle);
+  };
+
+  function handleRestyle() {
+    const plotDiv = document.getElementById('plot');
+    if (plotDiv.data && currentTab === 'Histogram') {
+      const traceA = plotDiv.data.find(d => d.name === 'Part A');
+      if (traceA && traceA.visible !== undefined) histVisibleA = traceA.visible;
+      const traceB = plotDiv.data.find(d => d.name === 'Part B');
+      if (traceB && traceB.visible !== undefined) histVisibleB = traceB.visible;
+    }
+  }
+
+  function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(`tab-${tab}`).classList.add('active');
+    
+    document.getElementById('hist-controls').classList.toggle('active', tab === 'Histogram');
+    document.getElementById('box-controls').classList.toggle('active', tab === 'Boxplot');
+    
+    updatePlot();
+  }
+
+  function setDistribution(dist) {
+    distribution = dist;
+    document.querySelectorAll('.data-controls .btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(`btn-${dist}`).classList.add('active');
+    generateData();
+  }
+
+  function updateBinSize(val) {
+    binSize = parseFloat(val);
+    document.getElementById('bin-size-val').textContent = binSize.toFixed(1);
+    updatePlot();
+  }
+
+  function updateOutlierThresh(val) {
+    outlierThreshold = parseFloat(val);
+    document.getElementById('outlier-thresh-val').textContent = outlierThreshold.toFixed(1);
+    updatePlot();
+  }
+
+  function updateOutlierSliderMax() {
+    const slider = document.getElementById('outlier-thresh');
+    if (!slider || dataA.length === 0 || dataB.length === 0) return;
+    let maxVal = Math.max(...dataA, ...dataB);
+    let newMax = Math.max(0.5, parseFloat(maxVal.toFixed(1)));
+    slider.max = newMax;
+    if (outlierThreshold > newMax) {
+      outlierThreshold = newMax;
+      slider.value = newMax;
+      document.getElementById('outlier-thresh-val').textContent = outlierThreshold.toFixed(1);
+    }
+  }
+
+  function generateData() {
+    dataA = [];
+    dataB = [];
+    for(let i = 0; i < 50; i++) {
+      dataA.push(generateValue());
+      dataB.push(generateValue());
+    }
+    updateOutlierSliderMax();
+    renderTables();
+    updatePlot();
+  }
+
+  function generateValue() {
+    let val;
+    if (distribution === 'Normal') {
+      val = randomNormal(0, 1.2);
+    } else if (distribution === 'Bimodal') {
+      val = Math.random() > 0.5 ? randomNormal(-2, 0.6) : randomNormal(2, 0.6);
+    } else if (distribution === 'Uniform') {
+      val = (Math.random() * 8) - 4;
+    } else {
+      val = (Math.random() - 0.5) * 8;
+    }
+    return Math.max(-4.0, Math.min(4.0, val));
+  }
+
+  function randomNormal(mean, stdDev) {
+    let u1 = Math.random();
+    let u2 = Math.random();
+    let randStdNormal = Math.sqrt(-2.0 * Math.log(u1)) * Math.sin(2.0 * Math.PI * u2);
+    return mean + stdDev * randStdNormal;
+  }
+
+  function renderTables() {
+    renderTable('tableA', dataA);
+    renderTable('tableB', dataB);
+  }
+
+  function renderTable(id, data) {
+    const tbody = document.querySelector(`#${id} tbody`);
+    let html = '';
+    for (let r = 0; r < 10; r++) {
+      html += '<tr>';
+      for (let c = 0; c < 5; c++) {
+        let index = r * 5 + c;
+        let val = data[index].toFixed(1);
+        html += `<td id="cell-${id}-${index}"><input type="number" step="0.1" value="${val}" data-id="${id}" data-index="${index}" onchange="handleEdit(this)"></td>`;
+      }
+      html += '</tr>';
+    }
+    tbody.innerHTML = html;
+  }
+
+  function handleEdit(input) {
+    let val = parseFloat(input.value);
+    if (isNaN(val)) val = 0;
+    
+    // Allow any magnitude
+    input.value = val.toFixed(1);
+    
+    let id = input.getAttribute('data-id');
+    let index = parseInt(input.getAttribute('data-index'));
+    
+    if (id === 'tableA') dataA[index] = val;
+    else dataB[index] = val;
+    
+    updateOutlierSliderMax();
+    updatePlot();
+  }
+
+  function quantile(arr, p) {
+    let idx = 1 + (arr.length - 1) * p;
+    let lo = Math.floor(idx);
+    let hi = Math.ceil(idx);
+    let qs = arr[lo - 1];
+    let h = idx - lo;
+    return (1 - h) * qs + h * arr[hi - 1];
+  }
+
+  function getStats(data) {
+    let sorted = [...data].sort((a, b) => a - b);
+    let q1 = quantile(sorted, 0.25);
+    let median = quantile(sorted, 0.5);
+    let q3 = quantile(sorted, 0.75);
+    let iqr = q3 - q1;
+    return {q1, median, q3, iqr};
+  }
+
+  function updatePlot() {
+    const plotDiv = document.getElementById('plot');
+
+    if (plotDiv.data && currentTab === 'Histogram') {
+      const traceA = plotDiv.data.find(d => d.name === 'Part A');
+      if (traceA && traceA.visible !== undefined) histVisibleA = traceA.visible;
+      const traceB = plotDiv.data.find(d => d.name === 'Part B');
+      if (traceB && traceB.visible !== undefined) histVisibleB = traceB.visible;
+    }
+
+    let data = [];
+    let layout = {
+      margin: { t: 40, r: 20, b: 40, l: 50 },
+      plot_bgcolor: '#ffffff',
+      paper_bgcolor: '#ffffff',
+      font: { color: '#333333' },
+      hovermode: 'closest',
+      showlegend: true,
+      legend: { orientation: 'h', y: 1.1, x: 0.5, xanchor: 'center' },
+      xaxis: { zeroline: false },
+      yaxis: { zeroline: false }
+    };
+
+    if (currentTab === 'Histogram') {
+      data = [
+        {
+          x: dataA, type: 'histogram', name: 'Part A',
+          marker: { color: '#a3c4f3', line: { color: '#001f54', width: 1 } },
+          xbins: { size: binSize },
+          opacity: 0.8,
+          visible: histVisibleA,
+          hovertemplate: 'Part A<br>Val: %{x}<br>Count: %{y}<extra></extra>'
+        },
+        {
+          x: dataB, type: 'histogram', name: 'Part B',
+          marker: { color: '#cccccc', line: { color: '#333333', width: 1 } },
+          xbins: { size: binSize },
+          opacity: 0.8,
+          visible: histVisibleB,
+          hovertemplate: 'Part B<br>Val: %{x}<br>Count: %{y}<extra></extra>'
+        }
+      ];
+      layout.barmode = 'overlay';
+      layout.xaxis.title = 'Deviation (mm)';
+      layout.yaxis.title = 'Frequency';
+      
+    } else if (currentTab === 'Boxplot') {
+      let statsA = getStats(dataA);
+      let statsB = getStats(dataB);
+      
+      let lfA_thresh = statsA.q1 - outlierThreshold * statsA.iqr;
+      let ufA_thresh = statsA.q3 + outlierThreshold * statsA.iqr;
+      let lfB_thresh = statsB.q1 - outlierThreshold * statsB.iqr;
+      let ufB_thresh = statsB.q3 + outlierThreshold * statsB.iqr;
+
+      // Recalculate whiskers to extend to actual min/max within threshold
+      let nonOutliersA = dataA.filter(v => v >= lfA_thresh && v <= ufA_thresh);
+      let lfA = nonOutliersA.length ? Math.min(...nonOutliersA) : statsA.q1;
+      let ufA = nonOutliersA.length ? Math.max(...nonOutliersA) : statsA.q3;
+
+      let nonOutliersB = dataB.filter(v => v >= lfB_thresh && v <= ufB_thresh);
+      let lfB = nonOutliersB.length ? Math.min(...nonOutliersB) : statsB.q1;
+      let ufB = nonOutliersB.length ? Math.max(...nonOutliersB) : statsB.q3;
+
+      let xA = dataA.map((_, i) => 1 + ( (i % 10)/10 - 0.45 ) * 0.3);
+      let colA = dataA.map(v => (v < lfA_thresh || v > ufA_thresh) ? '#001f54' : '#a3c4f3');
+      let lineColA = dataA.map(v => (v < lfA_thresh || v > ufA_thresh) ? '#ffffff' : '#001f54');
+
+      let xB = dataB.map((_, i) => 2 + ( (i % 10)/10 - 0.45 ) * 0.3);
+      let colB = dataB.map(v => (v < lfB_thresh || v > ufB_thresh) ? '#001f54' : '#cccccc');
+      let lineColB = dataB.map(v => (v < lfB_thresh || v > ufB_thresh) ? '#ffffff' : '#333333');
+
+      data = [
+        {
+          x: xA, y: dataA, type: 'scatter', mode: 'markers', name: 'Part A',
+          marker: { color: colA, line: { color: lineColA, width: 1 }, size: 8 },
+          hovertemplate: 'Part A: %{y:.1f}<extra></extra>'
+        },
+        {
+          x: xB, y: dataB, type: 'scatter', mode: 'markers', name: 'Part B',
+          marker: { color: colB, line: { color: lineColB, width: 1 }, size: 8 },
+          hovertemplate: 'Part B: %{y:.1f}<extra></extra>'
+        }
+      ];
+
+      layout.xaxis = { tickvals: [1, 2], ticktext: ['Part A', 'Part B'], range: [0.5, 2.5] };
+      layout.yaxis.title = 'Deviation (mm)';
+
+      layout.shapes = [
+        // Part A Box
+        { type: 'rect', x0: 0.8, x1: 1.2, y0: statsA.q1, y1: statsA.q3, line: {color: '#001f54', width: 2}, fillcolor: 'rgba(163, 196, 243, 0.3)' },
+        { type: 'line', x0: 0.8, x1: 1.2, y0: statsA.median, y1: statsA.median, line: {color: '#001f54', width: 2} },
+        { type: 'line', x0: 1, x1: 1, y0: statsA.q1, y1: lfA, line: {color: '#001f54', width: 1, dash: 'dash'} },
+        { type: 'line', x0: 0.9, x1: 1.1, y0: lfA, y1: lfA, line: {color: '#001f54', width: 2} },
+        { type: 'line', x0: 1, x1: 1, y0: statsA.q3, y1: ufA, line: {color: '#001f54', width: 1, dash: 'dash'} },
+        { type: 'line', x0: 0.9, x1: 1.1, y0: ufA, y1: ufA, line: {color: '#001f54', width: 2} },
+        // Part B Box
+        { type: 'rect', x0: 1.8, x1: 2.2, y0: statsB.q1, y1: statsB.q3, line: {color: '#333333', width: 2}, fillcolor: 'rgba(204, 204, 204, 0.3)' },
+        { type: 'line', x0: 1.8, x1: 2.2, y0: statsB.median, y1: statsB.median, line: {color: '#333333', width: 2} },
+        { type: 'line', x0: 2, x1: 2, y0: statsB.q1, y1: lfB, line: {color: '#333333', width: 1, dash: 'dash'} },
+        { type: 'line', x0: 1.9, x1: 2.1, y0: lfB, y1: lfB, line: {color: '#333333', width: 2} },
+        { type: 'line', x0: 2, x1: 2, y0: statsB.q3, y1: ufB, line: {color: '#333333', width: 1, dash: 'dash'} },
+        { type: 'line', x0: 1.9, x1: 2.1, y0: ufB, y1: ufB, line: {color: '#333333', width: 2} }
+      ];
+
+    } else if (currentTab === 'Scatterplot') {
+      data = [{
+        x: dataA, y: dataB, type: 'scatter', mode: 'markers', name: 'Data Points',
+        marker: { color: '#a3c4f3', line: { color: '#001f54', width: 1 }, size: 8 },
+        hovertemplate: 'Part A: %{x:.1f}<br>Part B: %{y:.1f}<extra></extra>'
+      }];
+      layout.xaxis.title = 'Part A Deviation (mm)';
+      layout.yaxis.title = 'Part B Deviation (mm)';
+    }
+
+    Plotly.react(plotDiv, data, layout, {displayModeBar: false});
+  }
+
+  function handleHover(data) {
+    clearHighlights();
+    data.points.forEach(p => {
+      if (currentTab === 'Histogram') {
+        let tableId = p.data.name === 'Part A' ? 'tableA' : 'tableB';
+        let indices = p.pointNumbers;
+        if (indices) {
+          if (Array.isArray(indices[0])) {
+            indices = indices.flat();
+          }
+          indices.forEach(idx => highlightCell(tableId, idx));
+        }
+      } else if (currentTab === 'Boxplot') {
+        let tableId = p.data.name === 'Part A' ? 'tableA' : 'tableB';
+        highlightCell(tableId, p.pointIndex);
+      } else if (currentTab === 'Scatterplot') {
+        highlightCell('tableA', p.pointIndex);
+        highlightCell('tableB', p.pointIndex);
+      }
+    });
+  }
+
+  function clearHighlights() {
+    document.querySelectorAll('td.highlight').forEach(td => td.classList.remove('highlight'));
+  }
+
+  function highlightCell(tableId, index) {
+    let cell = document.getElementById(`cell-${tableId}-${index}`);
+    if (cell) cell.classList.add('highlight');
+  }
+</script>
+</body>
+</html>
