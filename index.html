@@ -1,1 +1,275 @@
-This is a resource site for ISE 390.
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ISE 390: Probability and Statistics I — UAH</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #111827;
+      --text-muted: #4b5563;
+      --border: #e5e7eb;
+      --card-bg: #ffffff;
+      --card-hover-border: #9ca3af;
+      --card-thumb-bg: #f9fafb;
+      --link: #1d4ed8;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 56px 24px 80px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+    }
+
+    header {
+      margin-bottom: 36px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .institution {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    h1 {
+      font-size: 1.9rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
+    }
+
+    .intro {
+      font-size: 1rem;
+      color: var(--text-muted);
+      max-width: 740px;
+    }
+
+    .widgets-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      display: flex;
+      flex-direction: column;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .card:hover {
+      border-color: var(--card-hover-border);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+    }
+
+    .card-thumb {
+      height: 125px;
+      background-color: var(--card-thumb-bg);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card-thumb svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .card-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      transition: color 0.15s ease;
+    }
+
+    .card:hover .card-title {
+      color: var(--link);
+    }
+
+    .card-desc {
+      font-size: 0.86rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <header>
+      <div class="institution">The University of Alabama in Huntsville • ISEEM Department</div>
+      <h1>ISE 390: Probability and Statistics I</h1>
+      <p class="intro">
+        Interactive demonstrations and visual simulation widgets for ISE 390. Select any module below to explore the
+        concepts interactively.
+      </p>
+    </header>
+
+    <main class="widgets-grid" id="widgetsGrid">
+      <!-- Populated dynamically and automatically updated -->
+    </main>
+  </div>
+
+  <script>
+    const BASELINE_WIDGETS = [
+      {
+        filename: "eulerdiagrams.html",
+        title: "Euler Diagrams: Conditional Probability",
+        description: "Interactive Euler diagram exploring sample spaces, conditional probability, independent events, and subsets.",
+        icon: "euler"
+      },
+      {
+        filename: "histogram.html",
+        title: "Tolerance Overshoot Histogram",
+        description: "Frequency distribution histogram simulator with binning resolution controls and process tolerance limits.",
+        icon: "histogram"
+      },
+      {
+        filename: "plotting.html",
+        title: "Statistical Graphics Demo",
+        description: "Interactive visualization demo featuring scatter plots, box plots, and summary statistics.",
+        icon: "plotting"
+      }
+    ];
+
+    const THUMBNAILS = {
+      euler: `
+        <svg viewBox="0 0 260 125" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100%" height="100%" fill="#fafafa"/>
+          <rect x="25" y="16" width="210" height="92" rx="4" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+          <text x="35" y="32" fill="#6b7280" font-size="11" font-family="'Inter', sans-serif" font-weight="600">S</text>
+          <rect x="55" y="30" width="90" height="64" rx="4" fill="rgba(239, 68, 68, 0.25)" stroke="#ef4444" stroke-width="1.5"/>
+          <rect x="115" y="30" width="90" height="64" rx="4" fill="rgba(37, 99, 235, 0.25)" stroke="#2563eb" stroke-width="1.5"/>
+          <rect x="115" y="30" width="30" height="64" fill="rgba(147, 51, 234, 0.4)" stroke="#9333ea" stroke-width="1.2"/>
+          <text x="82" y="67" fill="#dc2626" font-size="13" font-family="'Inter', sans-serif" font-weight="600">A</text>
+          <text x="172" y="67" fill="#1d4ed8" font-size="13" font-family="'Inter', sans-serif" font-weight="600">B</text>
+        </svg>
+      `,
+      histogram: `
+        <svg viewBox="0 0 260 125" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100%" height="100%" fill="#fafafa"/>
+          <line x1="25" y1="105" x2="235" y2="105" stroke="#d1d5db" stroke-width="1.5"/>
+          <line x1="25" y1="20" x2="25" y2="105" stroke="#d1d5db" stroke-width="1.5"/>
+          <rect x="35" y="90" width="16" height="15" rx="2" fill="#3b82f6"/>
+          <rect x="55" y="70" width="16" height="35" rx="2" fill="#3b82f6"/>
+          <rect x="75" y="48" width="16" height="57" rx="2" fill="#3b82f6"/>
+          <rect x="95" y="30" width="16" height="75" rx="2" fill="#3b82f6"/>
+          <rect x="115" y="24" width="16" height="81" rx="2" fill="#3b82f6"/>
+          <rect x="135" y="38" width="16" height="67" rx="2" fill="#3b82f6"/>
+          <rect x="155" y="55" width="16" height="50" rx="2" fill="#3b82f6"/>
+          <rect x="175" y="72" width="16" height="33" rx="2" fill="#ef4444"/>
+          <rect x="195" y="88" width="16" height="17" rx="2" fill="#ef4444"/>
+          <line x1="170" y1="18" x2="170" y2="105" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="3 2"/>
+        </svg>
+      `,
+      plotting: `
+        <svg viewBox="0 0 260 125" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100%" height="100%" fill="#fafafa"/>
+          <!-- Box Plot -->
+          <g transform="translate(45, 12)">
+            <line x1="24" y1="10" x2="24" y2="28" stroke="#9ca3af" stroke-width="1.5"/>
+            <line x1="14" y1="10" x2="34" y2="10" stroke="#9ca3af" stroke-width="1.5"/>
+            <rect x="8" y="28" width="32" height="42" rx="2" fill="rgba(59, 130, 246, 0.15)" stroke="#3b82f6" stroke-width="1.5"/>
+            <line x1="8" y1="46" x2="40" y2="46" stroke="#1d4ed8" stroke-width="1.5"/>
+            <line x1="24" y1="70" x2="24" y2="88" stroke="#9ca3af" stroke-width="1.5"/>
+            <line x1="14" y1="88" x2="34" y2="88" stroke="#9ca3af" stroke-width="1.5"/>
+          </g>
+          <!-- Scatter Plot -->
+          <g transform="translate(130, 18)">
+            <line x1="10" y1="85" x2="100" y2="85" stroke="#d1d5db" stroke-width="1.5"/>
+            <line x1="10" y1="10" x2="10" y2="85" stroke="#d1d5db" stroke-width="1.5"/>
+            <circle cx="25" cy="72" r="3" fill="#3b82f6"/>
+            <circle cx="38" cy="62" r="3" fill="#3b82f6"/>
+            <circle cx="52" cy="50" r="3" fill="#3b82f6"/>
+            <circle cx="66" cy="42" r="3" fill="#3b82f6"/>
+            <circle cx="80" cy="28" r="3" fill="#3b82f6"/>
+            <circle cx="92" cy="18" r="3" fill="#3b82f6"/>
+            <line x1="18" y1="78" x2="96" y2="15" stroke="#f59e0b" stroke-width="1.5"/>
+          </g>
+        </svg>
+      `,
+      generic: `
+        <svg viewBox="0 0 260 125" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100%" height="100%" fill="#fafafa"/>
+          <circle cx="130" cy="62" r="30" fill="none" stroke="#d1d5db" stroke-width="1.5"/>
+          <line x1="85" y1="62" x2="175" y2="62" stroke="#d1d5db" stroke-width="1.5"/>
+          <line x1="130" y1="20" x2="130" y2="105" stroke="#d1d5db" stroke-width="1.5"/>
+        </svg>
+      `
+    };
+
+    let allWidgets = [...BASELINE_WIDGETS];
+    const grid = document.getElementById('widgetsGrid');
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function render() {
+      grid.innerHTML = allWidgets.map(w => {
+        const thumb = THUMBNAILS[w.icon] || THUMBNAILS.generic;
+        return `
+          <a class="card" href="widgets/${encodeURIComponent(w.filename)}">
+            <div class="card-thumb">
+              ${thumb}
+            </div>
+            <div class="card-body">
+              <h2 class="card-title">${escapeHtml(w.title)}</h2>
+              <p class="card-desc">${escapeHtml(w.description)}</p>
+            </div>
+          </a>
+        `;
+      }).join('');
+    }
+
+    render();
+  </script>
+</body>
+
+</html>
