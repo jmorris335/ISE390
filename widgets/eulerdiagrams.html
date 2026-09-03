@@ -483,8 +483,26 @@
     const svgCondB = document.getElementById('svgCondB');
     const svgCondA = document.getElementById('svgCondA');
 
+    const X_MIN = 2;
+    const Y_MIN = 2;
+    const X_MAX = SW - 2; // 698
+    const Y_MAX = SH - 2; // 398
+    const MAX_W = X_MAX - X_MIN; // 696
+    const MAX_H = Y_MAX - Y_MIN; // 396
+
     function clamp(val, min, max) {
+      if (max < min) return min;
       return Math.max(min, Math.min(max, val));
+    }
+
+    function clampRectToSampleSpace(rect) {
+      // 1. Ensure dimensions fit strictly within sample space
+      rect.w = clamp(rect.w, 15, MAX_W);
+      rect.h = clamp(rect.h, 15, MAX_H);
+
+      // 2. Ensure positions stay strictly within boundaries
+      rect.x = clamp(rect.x, X_MIN, X_MAX - rect.w);
+      rect.y = clamp(rect.y, Y_MIN, Y_MAX - rect.h);
     }
 
     function getIntersection(r1, r2) {
@@ -506,6 +524,9 @@
     }
 
     function calculateProbabilities() {
+      clampRectToSampleSpace(state.a);
+      clampRectToSampleSpace(state.b);
+
       const areaA = state.a.w * state.a.h;
       const areaB = state.b.w * state.b.h;
       const inter = getIntersection(state.a, state.b);
@@ -518,6 +539,9 @@
     }
 
     function updateVisuals(updateSliders = true) {
+      clampRectToSampleSpace(state.a);
+      clampRectToSampleSpace(state.b);
+
       const { pA, pB, pAB, inter } = calculateProbabilities();
 
       rectAEl.setAttribute('x', state.a.x);
@@ -886,11 +910,13 @@
 
       if (state.drag.mode === 'translate_single') {
         const key = state.drag.targetKey;
-        const newX = clamp(state.drag.initX + dx, 2, SW - 2 - state.drag.w);
-        const newY = clamp(state.drag.initY + dy, 2, SH - 2 - state.drag.h);
+        const rect = state[key];
+        const newX = clamp(state.drag.initX + dx, X_MIN, X_MAX - rect.w);
+        const newY = clamp(state.drag.initY + dy, Y_MIN, Y_MAX - rect.h);
 
-        state[key].x = newX;
-        state[key].y = newY;
+        rect.x = newX;
+        rect.y = newY;
+        clampRectToSampleSpace(rect);
 
         // Sliders update accordingly as intersection changes
         updateVisuals(true);
@@ -901,19 +927,22 @@
         const edge = state.drag.edge;
 
         if (edge === 'e') {
-          rect.w = clamp(init.w + dx, 20, SW - 4 - init.x);
+          rect.w = clamp(init.w + dx, 20, X_MAX - rect.x);
         } else if (edge === 'w') {
-          const newX = clamp(init.x + dx, 2, init.x + init.w - 20);
-          rect.w = init.w + (init.x - newX);
+          const right = Math.min(init.x + init.w, X_MAX);
+          const newX = clamp(init.x + dx, X_MIN, right - 20);
           rect.x = newX;
+          rect.w = right - newX;
         } else if (edge === 's') {
-          rect.h = clamp(init.h + dy, 20, SH - 4 - init.y);
+          rect.h = clamp(init.h + dy, 20, Y_MAX - rect.y);
         } else if (edge === 'n') {
-          const newY = clamp(init.y + dy, 2, init.y + init.h - 20);
-          rect.h = init.h + (init.y - newY);
+          const bottom = Math.min(init.y + init.h, Y_MAX);
+          const newY = clamp(init.y + dy, Y_MIN, bottom - 20);
           rect.y = newY;
+          rect.h = bottom - newY;
         }
 
+        clampRectToSampleSpace(rect);
         updateVisuals(true);
       } 
       else if (state.drag.mode === 'resize_corner') {
@@ -922,22 +951,24 @@
         const corner = state.drag.corner;
 
         if (corner.includes('e')) {
-          rect.w = clamp(init.w + dx, 20, SW - 4 - init.x);
-        }
-        if (corner.includes('w')) {
-          const newX = clamp(init.x + dx, 2, init.x + init.w - 20);
-          rect.w = init.w + (init.x - newX);
+          rect.w = clamp(init.w + dx, 20, X_MAX - rect.x);
+        } else if (corner.includes('w')) {
+          const right = Math.min(init.x + init.w, X_MAX);
+          const newX = clamp(init.x + dx, X_MIN, right - 20);
           rect.x = newX;
-        }
-        if (corner.includes('s')) {
-          rect.h = clamp(init.h + dy, 20, SH - 4 - init.y);
-        }
-        if (corner.includes('n')) {
-          const newY = clamp(init.y + dy, 2, init.y + init.h - 20);
-          rect.h = init.h + (init.y - newY);
-          rect.y = newY;
+          rect.w = right - newX;
         }
 
+        if (corner.includes('s')) {
+          rect.h = clamp(init.h + dy, 20, Y_MAX - rect.y);
+        } else if (corner.includes('n')) {
+          const bottom = Math.min(init.y + init.h, Y_MAX);
+          const newY = clamp(init.y + dy, Y_MIN, bottom - 20);
+          rect.y = newY;
+          rect.h = bottom - newY;
+        }
+
+        clampRectToSampleSpace(rect);
         updateVisuals(true);
       }
     });
@@ -961,56 +992,89 @@
     // Sliders programmatic sync
     function setRectanglesFromProbabilities(pA, pB, pAB) {
       state.suppressSliderEvents = true;
+      pA = clamp(pA, 0.01, 1);
+      pB = clamp(pB, 0.01, 1);
       pAB = clamp(pAB, 0, Math.min(pA, pB));
 
-      const targetHeightA = clamp(Math.sqrt(pA * SA * 0.6), 40, SH - 60);
-      const targetHeightB = clamp(Math.sqrt(pB * SA * 0.6), 40, SH - 60);
+      const areaA = pA * SA;
+      const areaB = pB * SA;
+      const areaAB = pAB * SA;
+      const pUnion = Math.min(1.0, pA + pB - pAB);
 
-      const widthA = targetHeightA > 0 ? (pA * SA) / targetHeightA : 0;
-      const widthB = targetHeightB > 0 ? (pB * SA) / targetHeightB : 0;
+      // Target comfortable span within sample space width (630px max span)
+      const targetSpanW = 630;
+      let targetH = Math.round((pUnion * SA) / targetSpanW);
+      targetH = clamp(targetH, 120, MAX_H - 40);
 
-      state.a.w = widthA;
-      state.a.h = targetHeightA;
-      state.b.w = widthB;
-      state.b.h = targetHeightB;
-
-      const centerY = SH / 2;
-      state.a.y = clamp(centerY - targetHeightA / 2, 20, SH - targetHeightA - 20);
-      state.b.y = clamp(centerY - targetHeightB / 2, 20, SH - targetHeightB - 20);
-
-      const top = Math.max(state.a.y, state.b.y);
-      const bottom = Math.min(state.a.y + state.a.h, state.b.y + state.b.h);
-      const overlapH = Math.max(0, bottom - top);
-
-      let overlapW = 0;
-      if (overlapH > 0 && pAB > 0) {
-        const requiredInterArea = pAB * SA;
-        overlapW = Math.min(Math.min(widthA, widthB), requiredInterArea / overlapH);
+      // If disjoint, ensure widthA + widthB + gap fits in MAX_W
+      if (pAB === 0) {
+        const minHNeeded = Math.ceil((areaA + areaB) / (MAX_W - 30));
+        if (minHNeeded > targetH) {
+          targetH = Math.min(minHNeeded, MAX_H - 20);
+        }
       }
 
+      let widthA = Math.round(areaA / targetH);
+      let widthB = Math.round(areaB / targetH);
+      let heightA = targetH;
+      let heightB = targetH;
+
+      // Clamp dimensions to sample space bounds
+      widthA = clamp(widthA, 20, MAX_W - 20);
+      heightA = clamp(heightA, 20, MAX_H);
+      widthB = clamp(widthB, 20, MAX_W - 20);
+      heightB = clamp(heightB, 20, MAX_H);
+
+      state.a.w = widthA;
+      state.a.h = heightA;
+      state.b.w = widthB;
+      state.b.h = heightB;
+
+      const centerY = SH / 2;
+      state.a.y = clamp(centerY - heightA / 2, Y_MIN + 10, Y_MAX - heightA - 10);
+      state.b.y = clamp(centerY - heightB / 2, Y_MIN + 10, Y_MAX - heightB - 10);
+
+      const overlapH = Math.min(heightA, heightB);
+      let overlapW = overlapH > 0 ? Math.round(areaAB / overlapH) : 0;
+      overlapW = clamp(overlapW, 0, Math.min(widthA, widthB));
+
       if (pAB === 0) {
-        state.a.x = 40;
-        state.b.x = Math.max(state.a.x + widthA + 30, SW - widthB - 40);
+        const gap = Math.max(8, Math.min(30, MAX_W - widthA - widthB));
+        const totalW = widthA + widthB + gap;
+        if (totalW <= MAX_W) {
+          const startX = Math.round((SW - totalW) / 2);
+          state.a.x = startX;
+          state.b.x = startX + widthA + gap;
+        } else {
+          state.a.x = X_MIN + 10;
+          state.a.w = Math.min(widthA, Math.round((MAX_W - 24) * (pA / (pA + pB))));
+          state.b.w = Math.min(widthB, MAX_W - 24 - state.a.w);
+          state.b.x = state.a.x + state.a.w + 4;
+        }
       } else if (Math.abs(pAB - pA) < 0.001 && Math.abs(pAB - pB) < 0.001) {
-        state.a.x = (SW - widthA) / 2;
+        state.a.x = Math.round((SW - widthA) / 2);
         state.b.x = state.a.x;
         state.b.y = state.a.y;
         state.b.w = state.a.w;
         state.b.h = state.a.h;
       } else if (Math.abs(pAB - pA) < 0.001) {
-        state.b.x = (SW - widthB) / 2;
-        state.a.x = state.b.x + (widthB - widthA) / 2;
-        state.a.y = state.b.y + (state.b.h - state.a.h) / 2;
+        state.b.x = Math.round((SW - widthB) / 2);
+        state.a.x = state.b.x + Math.round((widthB - widthA) / 2);
+        state.a.y = state.b.y + Math.round((state.b.h - state.a.h) / 2);
       } else if (Math.abs(pAB - pB) < 0.001) {
-        state.a.x = (SW - widthA) / 2;
-        state.b.x = state.a.x + (widthA - widthB) / 2;
-        state.b.y = state.a.y + (state.a.h - state.b.h) / 2;
+        state.a.x = Math.round((SW - widthA) / 2);
+        state.b.x = state.a.x + Math.round((widthA - widthB) / 2);
+        state.b.y = state.a.y + Math.round((state.a.h - state.b.h) / 2);
       } else {
         const totalSpan = widthA + widthB - overlapW;
-        const startX = clamp((SW - totalSpan) / 2, 20, SW - totalSpan - 20);
+        const startX = Math.round((SW - totalSpan) / 2);
         state.a.x = startX;
         state.b.x = startX + widthA - overlapW;
       }
+
+      // Guarantee strict containment within sample space
+      clampRectToSampleSpace(state.a);
+      clampRectToSampleSpace(state.b);
 
       state.suppressSliderEvents = false;
       updateVisuals(true);
