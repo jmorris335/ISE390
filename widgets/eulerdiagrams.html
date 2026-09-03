@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Euler Diagrams: Conditional Probability</title>
+  <style>
+    :root {
+      --bg: #f6f6f4;
+      --card-bg: #ffffff;
+      --card-border: #dcdcdc;
+      --text: #1a1a1a;
+      --text-muted: #666666;
+      --color-a: #d93838;
+      --color-a-fill: rgba(217, 56, 56, 0.35);
+      --color-b: #2563eb;
+      --color-b-fill: rgba(37, 99, 235, 0.35);
+      --color-ab: #8b5cf6;
+      --color-ab-fill: rgba(139, 92, 246, 0.55);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 24px 16px 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 4px;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #111111;
+      margin-bottom: 4px;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 16px 20px;
+    }
+
+    /* Presets Bar */
+    .presets-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #eeeeee;
+    }
+
+    .presets-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-right: 4px;
+    }
+
+    .btn {
+      background: #f4f4f4;
+      border: 1px solid #cccccc;
+      color: #222222;
+      padding: 5px 11px;
+      border-radius: 4px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .btn:hover {
+      background: #e8e8e8;
+      border-color: #999999;
+    }
+
+    .btn:active {
+      background: #dedede;
+    }
+
+    /* Sliders */
+    .sliders-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .slider-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .val-a { color: var(--color-a); }
+    .val-b { color: var(--color-b); }
+    .val-ab { color: var(--color-ab); }
+
+    input[type=range] {
+      width: 100%;
+      cursor: pointer;
+      accent-color: #555555;
+    }
+
+    .slider-item.item-a input[type=range] { accent-color: var(--color-a); }
+    .slider-item.item-b input[type=range] { accent-color: var(--color-b); }
+    .slider-item.item-ab input[type=range] { accent-color: var(--color-ab); }
+
+    .slider-sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* Main Euler Diagram */
+    .main-canvas-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .canvas-title-row {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .canvas-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .canvas-tip {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .main-svg-container {
+      width: 100%;
+      max-width: 860px;
+      aspect-ratio: 700 / 400;
+    }
+
+    svg.main-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: #ffffff;
+    }
+
+    /* SVG shapes */
+    .sample-space-box {
+      fill: #ffffff;
+      stroke: #000000;
+      stroke-width: 2.5;
+    }
+
+    .sample-label {
+      fill: #555555;
+      font-size: 13px;
+      font-weight: 600;
+      pointer-events: none;
+    }
+
+    .rect-target {
+      cursor: grab;
+    }
+
+    .rect-target:active {
+      cursor: grabbing;
+    }
+
+    .rect-a {
+      fill: var(--color-a-fill);
+      stroke: var(--color-a);
+      stroke-width: 2;
+    }
+
+    .rect-b {
+      fill: var(--color-b-fill);
+      stroke: var(--color-b);
+      stroke-width: 2;
+    }
+
+    .rect-ab {
+      fill: var(--color-ab-fill);
+      stroke: var(--color-ab);
+      stroke-width: 1.5;
+      stroke-dasharray: 4 2;
+    }
+
+    .rect-text {
+      font-size: 13px;
+      font-weight: 700;
+      pointer-events: none;
+      text-anchor: middle;
+      dominant-baseline: central;
+    }
+
+    .text-a { fill: #991b1b; }
+    .text-b { fill: #1e40af; }
+    .text-ab { fill: #5b21b6; }
+
+    /* Handles */
+    .handle {
+      fill: #ffffff;
+      stroke-width: 1.5;
+    }
+    .handle-a { stroke: var(--color-a); }
+    .handle-b { stroke: var(--color-b); }
+
+    .edge-hit {
+      stroke: transparent;
+      stroke-width: 10;
+      fill: none;
+    }
+    .edge-w, .edge-e { cursor: ew-resize; }
+    .edge-n, .edge-s { cursor: ns-resize; }
+    .corner-nw, .corner-se { cursor: nwse-resize; }
+    .corner-ne, .corner-sw { cursor: nesw-resize; }
+
+    /* Conditionals */
+    .cond-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .cond-box {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .cond-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #eeeeee;
+    }
+
+    .cond-formula {
+      font-size: 0.95rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .frac {
+      display: inline-flex;
+      flex-direction: column;
+      vertical-align: middle;
+      text-align: center;
+      font-size: 0.8rem;
+      line-height: 1.1;
+      padding: 0 2px;
+    }
+    .frac .top { border-bottom: 1px solid currentColor; }
+
+    .cond-res {
+      font-size: 1.15rem;
+      font-weight: 700;
+      font-family: monospace;
+    }
+    .cond-res-b { color: var(--color-b); }
+    .cond-res-a { color: var(--color-a); }
+
+    .cond-svg-wrap {
+      width: 100%;
+      height: 200px;
+      background: #fafafa;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    svg.cond-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    @media (max-width: 680px) {
+      .sliders-grid { grid-template-columns: 1fr; }
+      .cond-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>Euler Diagrams: Conditional Probability</h1>
+    </header>
+
+    <!-- Top Probability Controls -->
+    <div class="card">
+      <div class="presets-bar">
+        <span class="presets-label">Presets:</span>
+        <button class="btn" id="btnDisjoint">Mutually Exclusive</button>
+        <button class="btn" id="btnIndependent">Independent</button>
+        <button class="btn" id="btnAsubsetB">A ⊆ B</button>
+        <button class="btn" id="btnBsubsetA">B ⊆ A</button>
+        <button class="btn" id="btnEqual">A = B</button>
+        <button class="btn" id="btnReset">Reset</button>
+      </div>
+
+      <div class="sliders-grid">
+        <div class="slider-item item-a">
+          <div class="slider-header">
+            <span>P(A)</span>
+            <span class="val-a" id="valA">0.50</span>
+          </div>
+          <input type="range" id="sliderA" min="0" max="1" step="0.01" value="0.50" />
+          <div class="slider-sub"><span>0.00</span><span>1.00</span></div>
+        </div>
+
+        <div class="slider-item item-b">
+          <div class="slider-header">
+            <span>P(B)</span>
+            <span class="val-b" id="valB">0.40</span>
+          </div>
+          <input type="range" id="sliderB" min="0" max="1" step="0.01" value="0.40" />
+          <div class="slider-sub"><span>0.00</span><span>1.00</span></div>
+        </div>
+
+        <div class="slider-item item-ab">
+          <div class="slider-header">
+            <span>P(A ∩ B)</span>
+            <span class="val-ab" id="valAB">0.20</span>
+          </div>
+          <input type="range" id="sliderAB" min="0" max="0.40" step="0.01" value="0.20" />
+          <div class="slider-sub"><span>0.00</span><span id="labelMaxAB">max: 0.40</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Sample Space Diagram -->
+    <div class="card main-canvas-wrap">
+      <div class="canvas-title-row">
+        <span class="canvas-title">Sample Space (Area = 1.00)</span>
+        <span class="canvas-tip">Drag rectangles to translate independently (intersection moves B) • Drag borders to resize</span>
+      </div>
+
+      <div class="main-svg-container">
+        <svg class="main-svg" id="mainSvg" viewBox="0 0 700 400">
+          <!-- Sample Space Box (Black Border) -->
+          <rect x="1" y="1" width="698" height="398" class="sample-space-box" />
+          <text x="14" y="24" class="sample-label">S</text>
+
+          <!-- Rectangles Layer -->
+          <g id="diagramLayer">
+            <rect id="rectA" class="rect-a rect-target" x="70" y="70" width="350" height="200" />
+            <rect id="rectB" class="rect-b rect-target" x="245" y="70" width="350" height="160" />
+            <rect id="rectAB" class="rect-ab rect-target" x="245" y="70" width="175" height="160" />
+
+            <text id="textA" class="rect-text text-a" x="157" y="170">A</text>
+            <text id="textB" class="rect-text text-b" x="507" y="150">B</text>
+            <text id="textAB" class="rect-text text-ab" x="332" y="150">A ∩ B</text>
+          </g>
+
+          <!-- Handles Layer for Resizing -->
+          <g id="handlesLayer"></g>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Conditionals Diagrams -->
+    <div class="cond-grid">
+      
+      <!-- P(A|B) -->
+      <div class="card cond-box">
+        <div class="cond-header">
+          <div class="cond-formula">
+            <span>P(A|B) =</span>
+            <span class="frac">
+              <span class="top">P(A ∩ B)</span>
+              <span>P(B)</span>
+            </span>
+            <span id="formulaDetailAB" style="font-size: 0.85rem; font-weight: normal; color: #555;">= 0.20 / 0.40</span>
+          </div>
+          <div class="cond-res cond-res-b" id="valCondAB">0.500</div>
+        </div>
+        <div class="cond-svg-wrap">
+          <svg class="cond-svg" id="svgCondB" viewBox="0 0 380 200"></svg>
+        </div>
+      </div>
+
+      <!-- P(B|A) -->
+      <div class="card cond-box">
+        <div class="cond-header">
+          <div class="cond-formula">
+            <span>P(B|A) =</span>
+            <span class="frac">
+              <span class="top">P(A ∩ B)</span>
+              <span>P(A)</span>
+            </span>
+            <span id="formulaDetailBA" style="font-size: 0.85rem; font-weight: normal; color: #555;">= 0.20 / 0.50</span>
+          </div>
+          <div class="cond-res cond-res-a" id="valCondBA">0.400</div>
+        </div>
+        <div class="cond-svg-wrap">
+          <svg class="cond-svg" id="svgCondA" viewBox="0 0 380 200"></svg>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    const SW = 700;
+    const SH = 400;
+    const SA = SW * SH;
+
+    const state = {
+      a: { x: 70, y: 70, w: 350, h: 200 },
+      b: { x: 245, y: 70, w: 350, h: 160 },
+      drag: null,
+      suppressSliderEvents: false
+    };
+
+    const sliderA = document.getElementById('sliderA');
+    const sliderB = document.getElementById('sliderB');
+    const sliderAB = document.getElementById('sliderAB');
+    const valA = document.getElementById('valA');
+    const valB = document.getElementById('valB');
+    const valAB = document.getElementById('valAB');
+    const labelMaxAB = document.getElementById('labelMaxAB');
+
+    const valCondAB = document.getElementById('valCondAB');
+    const valCondBA = document.getElementById('valCondBA');
+    const formulaDetailAB = document.getElementById('formulaDetailAB');
+    const formulaDetailBA = document.getElementById('formulaDetailBA');
+
+    const mainSvg = document.getElementById('mainSvg');
+    const rectAEl = document.getElementById('rectA');
+    const rectBEl = document.getElementById('rectB');
+    const rectABEl = document.getElementById('rectAB');
+    const textAEl = document.getElementById('textA');
+    const textBEl = document.getElementById('textB');
+    const textABEl = document.getElementById('textAB');
+    const handlesLayer = document.getElementById('handlesLayer');
+
+    const svgCondB = document.getElementById('svgCondB');
+    const svgCondA = document.getElementById('svgCondA');
+
+    function clamp(val, min, max) {
+      return Math.max(min, Math.min(max, val));
+    }
+
+    function getIntersection(r1, r2) {
+      const left = Math.max(r1.x, r2.x);
+      const right = Math.min(r1.x + r1.w, r2.x + r2.w);
+      const top = Math.max(r1.y, r2.y);
+      const bottom = Math.min(r1.y + r1.h, r2.y + r2.h);
+
+      if (right > left && bottom > top) {
+        return {
+          x: left,
+          y: top,
+          w: right - left,
+          h: bottom - top,
+          area: (right - left) * (bottom - top)
+        };
+      }
+      return { x: 0, y: 0, w: 0, h: 0, area: 0 };
+    }
+
+    function calculateProbabilities() {
+      const areaA = state.a.w * state.a.h;
+      const areaB = state.b.w * state.b.h;
+      const inter = getIntersection(state.a, state.b);
+
+      const pA = clamp(areaA / SA, 0, 1);
+      const pB = clamp(areaB / SA, 0, 1);
+      const pAB = clamp(inter.area / SA, 0, Math.min(pA, pB));
+
+      return { pA, pB, pAB, inter };
+    }
+
+    function updateVisuals(updateSliders = true) {
+      const { pA, pB, pAB, inter } = calculateProbabilities();
+
+      rectAEl.setAttribute('x', state.a.x);
+      rectAEl.setAttribute('y', state.a.y);
+      rectAEl.setAttribute('width', Math.max(0, state.a.w));
+      rectAEl.setAttribute('height', Math.max(0, state.a.h));
+
+      rectBEl.setAttribute('x', state.b.x);
+      rectBEl.setAttribute('y', state.b.y);
+      rectBEl.setAttribute('width', Math.max(0, state.b.w));
+      rectBEl.setAttribute('height', Math.max(0, state.b.h));
+
+      if (inter.area > 0) {
+        rectABEl.style.display = 'block';
+        rectABEl.setAttribute('x', inter.x);
+        rectABEl.setAttribute('y', inter.y);
+        rectABEl.setAttribute('width', inter.w);
+        rectABEl.setAttribute('height', inter.h);
+      } else {
+        rectABEl.style.display = 'none';
+      }
+
+      updateLabels(inter, pA, pB, pAB);
+      renderHandles();
+
+      if (updateSliders && !state.suppressSliderEvents) {
+        sliderA.value = pA.toFixed(2);
+        sliderB.value = pB.toFixed(2);
+        const maxAB = Math.min(pA, pB);
+        sliderAB.max = maxAB.toFixed(2);
+        sliderAB.value = Math.min(pAB, maxAB).toFixed(2);
+        labelMaxAB.textContent = `max: ${maxAB.toFixed(2)}`;
+      }
+
+      valA.textContent = pA.toFixed(2);
+      valB.textContent = pB.toFixed(2);
+      valAB.textContent = pAB.toFixed(2);
+
+      let pA_given_B = pB > 0.0001 ? (pAB / pB) : null;
+      let pB_given_A = pA > 0.0001 ? (pAB / pA) : null;
+
+      if (pA_given_B !== null) {
+        pA_given_B = clamp(pA_given_B, 0, 1);
+        valCondAB.textContent = pA_given_B.toFixed(3);
+        formulaDetailAB.textContent = `= ${pAB.toFixed(2)} / ${pB.toFixed(2)}`;
+      } else {
+        valCondAB.textContent = '—';
+        formulaDetailAB.textContent = 'P(B) = 0';
+      }
+
+      if (pB_given_A !== null) {
+        pB_given_A = clamp(pB_given_A, 0, 1);
+        valCondBA.textContent = pB_given_A.toFixed(3);
+        formulaDetailBA.textContent = `= ${pAB.toFixed(2)} / ${pA.toFixed(2)}`;
+      } else {
+        valCondBA.textContent = '—';
+        formulaDetailBA.textContent = 'P(A) = 0';
+      }
+
+      renderConditionalDiagramB(inter);
+      renderConditionalDiagramA(inter);
+    }
+
+    function updateLabels(inter, pA, pB, pAB) {
+      if (inter.area > 600) {
+        textABEl.style.display = 'block';
+        textABEl.setAttribute('x', inter.x + inter.w / 2);
+        textABEl.setAttribute('y', inter.y + inter.h / 2);
+        textABEl.textContent = `A ∩ B`;
+      } else {
+        textABEl.style.display = 'none';
+      }
+
+      if (state.a.w > 30 && state.a.h > 20) {
+        textAEl.style.display = 'block';
+        let ax = state.a.x + state.a.w / 2;
+        let ay = state.a.y + state.a.h / 2;
+        if (inter.area > 0 && Math.abs(ax - (inter.x + inter.w / 2)) < 30) {
+          ax = (state.a.x < state.b.x) ? state.a.x + (inter.x - state.a.x) / 2 : state.a.x + state.a.w - (state.a.x + state.a.w - (inter.x + inter.w)) / 2;
+        }
+        textAEl.setAttribute('x', ax);
+        textAEl.setAttribute('y', ay);
+        textAEl.textContent = 'A';
+      } else {
+        textAEl.style.display = 'none';
+      }
+
+      if (state.b.w > 30 && state.b.h > 20) {
+        textBEl.style.display = 'block';
+        let bx = state.b.x + state.b.w / 2;
+        let by = state.b.y + state.b.h / 2;
+        if (inter.area > 0 && Math.abs(bx - (inter.x + inter.w / 2)) < 30) {
+          bx = (state.b.x > state.a.x) ? inter.x + inter.w + (state.b.x + state.b.w - (inter.x + inter.w)) / 2 : state.b.x + (inter.x - state.b.x) / 2;
+        }
+        textBEl.setAttribute('x', bx);
+        textBEl.setAttribute('y', by);
+        textBEl.textContent = 'B';
+      } else {
+        textBEl.style.display = 'none';
+      }
+    }
+
+    // Lower Diagram 1: Blue rectangle B with intersection inside
+    function renderConditionalDiagramB(inter) {
+      svgCondB.innerHTML = '';
+      if (state.b.w <= 0 || state.b.h <= 0) return;
+
+      const cw = 380;
+      const ch = 200;
+      const pad = 24;
+
+      const scale = Math.min((cw - 2 * pad) / state.b.w, (ch - 2 * pad) / state.b.h);
+      const drawW = state.b.w * scale;
+      const drawH = state.b.h * scale;
+      const drawX = (cw - drawW) / 2;
+      const drawY = (ch - drawH) / 2;
+
+      const rectB = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rectB.setAttribute('x', drawX);
+      rectB.setAttribute('y', drawY);
+      rectB.setAttribute('width', drawW);
+      rectB.setAttribute('height', drawH);
+      rectB.setAttribute('fill', 'rgba(37, 99, 235, 0.35)');
+      rectB.setAttribute('stroke', '#2563eb');
+      rectB.setAttribute('stroke-width', '2');
+      svgCondB.appendChild(rectB);
+
+      const labelB = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      labelB.setAttribute('x', drawX + 10);
+      labelB.setAttribute('y', drawY + 18);
+      labelB.setAttribute('fill', '#1e40af');
+      labelB.setAttribute('font-size', '13');
+      labelB.setAttribute('font-weight', '700');
+      labelB.textContent = 'B';
+      svgCondB.appendChild(labelB);
+
+      if (inter.area > 0) {
+        const relX = (inter.x - state.b.x) * scale;
+        const relY = (inter.y - state.b.y) * scale;
+        const relW = inter.w * scale;
+        const relH = inter.h * scale;
+
+        const interRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        interRect.setAttribute('x', drawX + relX);
+        interRect.setAttribute('y', drawY + relY);
+        interRect.setAttribute('width', relW);
+        interRect.setAttribute('height', relH);
+        interRect.setAttribute('fill', 'rgba(139, 92, 246, 0.6)');
+        interRect.setAttribute('stroke', '#8b5cf6');
+        interRect.setAttribute('stroke-width', '1.5');
+        interRect.setAttribute('stroke-dasharray', '4 2');
+        svgCondB.appendChild(interRect);
+
+        if (relW > 40 && relH > 24) {
+          const interLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          interLabel.setAttribute('x', drawX + relX + relW / 2);
+          interLabel.setAttribute('y', drawY + relY + relH / 2);
+          interLabel.setAttribute('fill', '#4c1d95');
+          interLabel.setAttribute('font-size', '11');
+          interLabel.setAttribute('font-weight', '700');
+          interLabel.setAttribute('text-anchor', 'middle');
+          interLabel.setAttribute('dominant-baseline', 'central');
+          interLabel.textContent = `A ∩ B`;
+          svgCondB.appendChild(interLabel);
+        }
+      }
+    }
+
+    // Lower Diagram 2: Red rectangle A with intersection inside
+    function renderConditionalDiagramA(inter) {
+      svgCondA.innerHTML = '';
+      if (state.a.w <= 0 || state.a.h <= 0) return;
+
+      const cw = 380;
+      const ch = 200;
+      const pad = 24;
+
+      const scale = Math.min((cw - 2 * pad) / state.a.w, (ch - 2 * pad) / state.a.h);
+      const drawW = state.a.w * scale;
+      const drawH = state.a.h * scale;
+      const drawX = (cw - drawW) / 2;
+      const drawY = (ch - drawH) / 2;
+
+      const rectA = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rectA.setAttribute('x', drawX);
+      rectA.setAttribute('y', drawY);
+      rectA.setAttribute('width', drawW);
+      rectA.setAttribute('height', drawH);
+      rectA.setAttribute('fill', 'rgba(217, 56, 56, 0.35)');
+      rectA.setAttribute('stroke', '#d93838');
+      rectA.setAttribute('stroke-width', '2');
+      svgCondA.appendChild(rectA);
+
+      const labelA = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      labelA.setAttribute('x', drawX + 10);
+      labelA.setAttribute('y', drawY + 18);
+      labelA.setAttribute('fill', '#991b1b');
+      labelA.setAttribute('font-size', '13');
+      labelA.setAttribute('font-weight', '700');
+      labelA.textContent = 'A';
+      svgCondA.appendChild(labelA);
+
+      if (inter.area > 0) {
+        const relX = (inter.x - state.a.x) * scale;
+        const relY = (inter.y - state.a.y) * scale;
+        const relW = inter.w * scale;
+        const relH = inter.h * scale;
+
+        const interRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        interRect.setAttribute('x', drawX + relX);
+        interRect.setAttribute('y', drawY + relY);
+        interRect.setAttribute('width', relW);
+        interRect.setAttribute('height', relH);
+        interRect.setAttribute('fill', 'rgba(139, 92, 246, 0.6)');
+        interRect.setAttribute('stroke', '#8b5cf6');
+        interRect.setAttribute('stroke-width', '1.5');
+        interRect.setAttribute('stroke-dasharray', '4 2');
+        svgCondA.appendChild(interRect);
+
+        if (relW > 40 && relH > 24) {
+          const interLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          interLabel.setAttribute('x', drawX + relX + relW / 2);
+          interLabel.setAttribute('y', drawY + relY + relH / 2);
+          interLabel.setAttribute('fill', '#4c1d95');
+          interLabel.setAttribute('font-size', '11');
+          interLabel.setAttribute('font-weight', '700');
+          interLabel.setAttribute('text-anchor', 'middle');
+          interLabel.setAttribute('dominant-baseline', 'central');
+          interLabel.textContent = `A ∩ B`;
+          svgCondA.appendChild(interLabel);
+        }
+      }
+    }
+
+    // Handles for border resizing
+    function renderHandles() {
+      handlesLayer.innerHTML = '';
+
+      function addHandles(targetKey, rect, className) {
+        const hs = 7;
+        const corners = [
+          { type: 'nw', x: rect.x, y: rect.y, cursor: 'nwse-resize' },
+          { type: 'ne', x: rect.x + rect.w, y: rect.y, cursor: 'nesw-resize' },
+          { type: 'se', x: rect.x + rect.w, y: rect.y + rect.h, cursor: 'nwse-resize' },
+          { type: 'sw', x: rect.x, y: rect.y + rect.h, cursor: 'nesw-resize' }
+        ];
+
+        const edges = [
+          { type: 'n', x1: rect.x + hs, y1: rect.y, x2: rect.x + rect.w - hs, y2: rect.y, cursor: 'ns-resize' },
+          { type: 's', x1: rect.x + hs, y1: rect.y + rect.h, x2: rect.x + rect.w - hs, y2: rect.y + rect.h, cursor: 'ns-resize' },
+          { type: 'w', x1: rect.x, y1: rect.y + hs, x2: rect.x, y2: rect.y + rect.h - hs, cursor: 'ew-resize' },
+          { type: 'e', x1: rect.x + rect.w, y1: rect.y + hs, x2: rect.x + rect.w, y2: rect.y + rect.h - hs, cursor: 'ew-resize' }
+        ];
+
+        edges.forEach(edge => {
+          const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          line.setAttribute('x1', edge.x1);
+          line.setAttribute('y1', edge.y1);
+          line.setAttribute('x2', edge.x2);
+          line.setAttribute('y2', edge.y2);
+          line.setAttribute('class', `edge-hit edge-${edge.type}`);
+          line.setAttribute('data-target', targetKey);
+          line.setAttribute('data-edge', edge.type);
+          handlesLayer.appendChild(line);
+        });
+
+        corners.forEach(corner => {
+          const square = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          square.setAttribute('x', corner.x - hs / 2);
+          square.setAttribute('y', corner.y - hs / 2);
+          square.setAttribute('width', hs);
+          square.setAttribute('height', hs);
+          square.setAttribute('class', `handle ${className} corner-${corner.type}`);
+          square.setAttribute('data-target', targetKey);
+          square.setAttribute('data-corner', corner.type);
+          handlesLayer.appendChild(square);
+        });
+      }
+
+      addHandles('a', state.a, 'handle-a');
+      addHandles('b', state.b, 'handle-b');
+    }
+
+    function getSvgCoordinates(e) {
+      const pt = mainSvg.createSVGPoint();
+      pt.x = e.clientX;
+      pt.y = e.clientY;
+      return pt.matrixTransform(mainSvg.getScreenCTM().inverse());
+    }
+
+    function isInside(rect, x, y) {
+      return x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h;
+    }
+
+    // Interaction Handling: Independent rectangle translation or border resize
+    mainSvg.addEventListener('pointerdown', (e) => {
+      const target = e.target;
+      const coords = getSvgCoordinates(e);
+
+      // Handle corner resizing
+      if (target.dataset && target.dataset.corner) {
+        e.preventDefault();
+        mainSvg.setPointerCapture(e.pointerId);
+        state.drag = {
+          mode: 'resize_corner',
+          targetKey: target.dataset.target,
+          corner: target.dataset.corner,
+          startX: coords.x,
+          startY: coords.y,
+          initRect: { ...state[target.dataset.target] }
+        };
+        return;
+      }
+
+      // Handle edge resizing
+      if (target.dataset && target.dataset.edge) {
+        e.preventDefault();
+        mainSvg.setPointerCapture(e.pointerId);
+        state.drag = {
+          mode: 'resize_edge',
+          targetKey: target.dataset.target,
+          edge: target.dataset.edge,
+          startX: coords.x,
+          startY: coords.y,
+          initRect: { ...state[target.dataset.target] }
+        };
+        return;
+      }
+
+      // Independent translation: determine which rectangle was clicked
+      const inA = isInside(state.a, coords.x, coords.y);
+      const inB = isInside(state.b, coords.x, coords.y);
+
+      let targetKey = null;
+      if (inA && inB) {
+        // When clicking on the intersection, prefer to move rectangle B
+        targetKey = 'b';
+      } else if (inA) {
+        targetKey = 'a';
+      } else if (inB) {
+        targetKey = 'b';
+      }
+
+      if (targetKey) {
+        e.preventDefault();
+        mainSvg.setPointerCapture(e.pointerId);
+        state.drag = {
+          mode: 'translate_single',
+          targetKey: targetKey,
+          startX: coords.x,
+          startY: coords.y,
+          initX: state[targetKey].x,
+          initY: state[targetKey].y,
+          w: state[targetKey].w,
+          h: state[targetKey].h
+        };
+      }
+    });
+
+    mainSvg.addEventListener('pointermove', (e) => {
+      if (!state.drag) return;
+      e.preventDefault();
+      const coords = getSvgCoordinates(e);
+      const dx = coords.x - state.drag.startX;
+      const dy = coords.y - state.drag.startY;
+
+      if (state.drag.mode === 'translate_single') {
+        const key = state.drag.targetKey;
+        const newX = clamp(state.drag.initX + dx, 2, SW - 2 - state.drag.w);
+        const newY = clamp(state.drag.initY + dy, 2, SH - 2 - state.drag.h);
+
+        state[key].x = newX;
+        state[key].y = newY;
+
+        // Sliders update accordingly as intersection changes
+        updateVisuals(true);
+      } 
+      else if (state.drag.mode === 'resize_edge') {
+        const rect = state[state.drag.targetKey];
+        const init = state.drag.initRect;
+        const edge = state.drag.edge;
+
+        if (edge === 'e') {
+          rect.w = clamp(init.w + dx, 20, SW - 4 - init.x);
+        } else if (edge === 'w') {
+          const newX = clamp(init.x + dx, 2, init.x + init.w - 20);
+          rect.w = init.w + (init.x - newX);
+          rect.x = newX;
+        } else if (edge === 's') {
+          rect.h = clamp(init.h + dy, 20, SH - 4 - init.y);
+        } else if (edge === 'n') {
+          const newY = clamp(init.y + dy, 2, init.y + init.h - 20);
+          rect.h = init.h + (init.y - newY);
+          rect.y = newY;
+        }
+
+        updateVisuals(true);
+      } 
+      else if (state.drag.mode === 'resize_corner') {
+        const rect = state[state.drag.targetKey];
+        const init = state.drag.initRect;
+        const corner = state.drag.corner;
+
+        if (corner.includes('e')) {
+          rect.w = clamp(init.w + dx, 20, SW - 4 - init.x);
+        }
+        if (corner.includes('w')) {
+          const newX = clamp(init.x + dx, 2, init.x + init.w - 20);
+          rect.w = init.w + (init.x - newX);
+          rect.x = newX;
+        }
+        if (corner.includes('s')) {
+          rect.h = clamp(init.h + dy, 20, SH - 4 - init.y);
+        }
+        if (corner.includes('n')) {
+          const newY = clamp(init.y + dy, 2, init.y + init.h - 20);
+          rect.h = init.h + (init.y - newY);
+          rect.y = newY;
+        }
+
+        updateVisuals(true);
+      }
+    });
+
+    mainSvg.addEventListener('pointerup', (e) => {
+      if (state.drag) {
+        try { mainSvg.releasePointerCapture(e.pointerId); } catch(_) {}
+        state.drag = null;
+        updateVisuals(true);
+      }
+    });
+
+    mainSvg.addEventListener('pointercancel', (e) => {
+      if (state.drag) {
+        try { mainSvg.releasePointerCapture(e.pointerId); } catch(_) {}
+        state.drag = null;
+        updateVisuals(true);
+      }
+    });
+
+    // Sliders programmatic sync
+    function setRectanglesFromProbabilities(pA, pB, pAB) {
+      state.suppressSliderEvents = true;
+      pAB = clamp(pAB, 0, Math.min(pA, pB));
+
+      const targetHeightA = clamp(Math.sqrt(pA * SA * 0.6), 40, SH - 60);
+      const targetHeightB = clamp(Math.sqrt(pB * SA * 0.6), 40, SH - 60);
+
+      const widthA = targetHeightA > 0 ? (pA * SA) / targetHeightA : 0;
+      const widthB = targetHeightB > 0 ? (pB * SA) / targetHeightB : 0;
+
+      state.a.w = widthA;
+      state.a.h = targetHeightA;
+      state.b.w = widthB;
+      state.b.h = targetHeightB;
+
+      const centerY = SH / 2;
+      state.a.y = clamp(centerY - targetHeightA / 2, 20, SH - targetHeightA - 20);
+      state.b.y = clamp(centerY - targetHeightB / 2, 20, SH - targetHeightB - 20);
+
+      const top = Math.max(state.a.y, state.b.y);
+      const bottom = Math.min(state.a.y + state.a.h, state.b.y + state.b.h);
+      const overlapH = Math.max(0, bottom - top);
+
+      let overlapW = 0;
+      if (overlapH > 0 && pAB > 0) {
+        const requiredInterArea = pAB * SA;
+        overlapW = Math.min(Math.min(widthA, widthB), requiredInterArea / overlapH);
+      }
+
+      if (pAB === 0) {
+        state.a.x = 40;
+        state.b.x = Math.max(state.a.x + widthA + 30, SW - widthB - 40);
+      } else if (Math.abs(pAB - pA) < 0.001 && Math.abs(pAB - pB) < 0.001) {
+        state.a.x = (SW - widthA) / 2;
+        state.b.x = state.a.x;
+        state.b.y = state.a.y;
+        state.b.w = state.a.w;
+        state.b.h = state.a.h;
+      } else if (Math.abs(pAB - pA) < 0.001) {
+        state.b.x = (SW - widthB) / 2;
+        state.a.x = state.b.x + (widthB - widthA) / 2;
+        state.a.y = state.b.y + (state.b.h - state.a.h) / 2;
+      } else if (Math.abs(pAB - pB) < 0.001) {
+        state.a.x = (SW - widthA) / 2;
+        state.b.x = state.a.x + (widthA - widthB) / 2;
+        state.b.y = state.a.y + (state.a.h - state.b.h) / 2;
+      } else {
+        const totalSpan = widthA + widthB - overlapW;
+        const startX = clamp((SW - totalSpan) / 2, 20, SW - totalSpan - 20);
+        state.a.x = startX;
+        state.b.x = startX + widthA - overlapW;
+      }
+
+      state.suppressSliderEvents = false;
+      updateVisuals(true);
+    }
+
+    sliderA.addEventListener('input', () => {
+      let pA = parseFloat(sliderA.value);
+      let pB = parseFloat(sliderB.value);
+      let maxAB = Math.min(pA, pB);
+      sliderAB.max = maxAB.toFixed(2);
+      let pAB = Math.min(parseFloat(sliderAB.value), maxAB);
+      sliderAB.value = pAB.toFixed(2);
+      setRectanglesFromProbabilities(pA, pB, pAB);
+    });
+
+    sliderB.addEventListener('input', () => {
+      let pA = parseFloat(sliderA.value);
+      let pB = parseFloat(sliderB.value);
+      let maxAB = Math.min(pA, pB);
+      sliderAB.max = maxAB.toFixed(2);
+      let pAB = Math.min(parseFloat(sliderAB.value), maxAB);
+      sliderAB.value = pAB.toFixed(2);
+      setRectanglesFromProbabilities(pA, pB, pAB);
+    });
+
+    sliderAB.addEventListener('input', () => {
+      let pA = parseFloat(sliderA.value);
+      let pB = parseFloat(sliderB.value);
+      let pAB = parseFloat(sliderAB.value);
+      setRectanglesFromProbabilities(pA, pB, pAB);
+    });
+
+    document.getElementById('btnDisjoint').addEventListener('click', () => {
+      setRectanglesFromProbabilities(0.40, 0.40, 0.00);
+    });
+
+    document.getElementById('btnIndependent').addEventListener('click', () => {
+      setRectanglesFromProbabilities(0.50, 0.40, 0.20);
+    });
+
+    document.getElementById('btnAsubsetB').addEventListener('click', () => {
+      setRectanglesFromProbabilities(0.25, 0.60, 0.25);
+    });
+
+    document.getElementById('btnBsubsetA').addEventListener('click', () => {
+      setRectanglesFromProbabilities(0.60, 0.25, 0.25);
+    });
+
+    document.getElementById('btnEqual').addEventListener('click', () => {
+      setRectanglesFromProbabilities(0.45, 0.45, 0.45);
+    });
+
+    document.getElementById('btnReset').addEventListener('click', () => {
+      setRectanglesFromProbabilities(0.50, 0.40, 0.20);
+    });
+
+    // Initialize
+    setRectanglesFromProbabilities(0.50, 0.40, 0.20);
+  </script>
+</body>
+</html>
