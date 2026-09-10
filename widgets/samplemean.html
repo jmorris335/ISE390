@@ -1,0 +1,1642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sample Mean (X̄)</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <style>
+    /* Minimalist & Plain Clean Design System */
+    :root {
+      --bg: #ffffff;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --text-light: #94a3b8;
+      
+      --border: #e2e8f0;
+      --border-subtle: #f1f5f9;
+      --border-focus: #94a3b8;
+      
+      --input-bg: #f8fafc;
+      
+      /* Colors */
+      --pop-color: #94a3b8;           /* Neutral slate for population */
+      --pop-fill: rgba(148, 163, 184, 0.28);
+      --pop-mean-color: #475569;
+      
+      --sample-color: #2563eb;        /* Vibrant blue for sample */
+      --sample-fill: rgba(37, 99, 235, 0.45);
+      --sample-mean-color: #1d4ed8;
+      
+      --accent-gold: #d97706;
+      --accent-gold-bg: #fef3c7;
+      
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      padding: 36px 20px 64px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 860px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      padding-bottom: 4px;
+    }
+
+    h1 {
+      font-size: 1.65rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+    }
+
+    .intro {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      max-width: 680px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+
+    /* Navigation back link */
+    .nav-bar {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      margin-bottom: -10px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+
+    .back-link:hover {
+      color: var(--text);
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Population Selector */
+    .pop-options-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .pop-options-left {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pop-options-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-right: 4px;
+    }
+
+    .btn-choice {
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .btn-choice:hover {
+      background: #e2e8f0;
+      border-color: #cbd5e1;
+    }
+
+    .btn-choice.active {
+      background: #1e293b;
+      border-color: #1e293b;
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    /* Population Stats Badges */
+    .pop-stats-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      background: var(--border-subtle);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 12px;
+      color: var(--text);
+    }
+
+    .pop-stats-badge span {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* SVG Plot Containers */
+    .plot-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .plot-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .plot-legend {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+    }
+
+    .swatch-pop {
+      background: var(--pop-fill);
+      border: 1px solid var(--pop-color);
+    }
+
+    .swatch-sample {
+      background: var(--sample-fill);
+      border: 1px solid var(--sample-color);
+    }
+
+    .swatch-line-mu {
+      width: 14px;
+      height: 2px;
+      background: var(--pop-mean-color);
+      border-top: 2px dashed var(--pop-mean-color);
+    }
+
+    .swatch-line-xbar {
+      width: 14px;
+      height: 2px;
+      background: var(--sample-mean-color);
+    }
+
+    .svg-wrapper {
+      position: relative;
+      width: 100%;
+      height: 230px;
+      background: #fafafa;
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .svg-plot {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Tooltip */
+    .plot-tooltip {
+      position: absolute;
+      pointer-events: none;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 6px 10px;
+      font-size: 0.78rem;
+      font-family: var(--font-mono);
+      color: var(--text);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+      z-index: 20;
+      transition: opacity 0.1s ease;
+      white-space: nowrap;
+    }
+
+    .plot-tooltip.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    /* Info Callout for Xbar */
+    .callout-xbar {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--sample-color);
+      border-radius: 6px;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .callout-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .callout-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    .metric-card {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .metric-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .metric-value {
+      font-family: var(--font-mono);
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    /* Controls Bar: Slider and Sample Button */
+    .controls-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 14px;
+      padding-top: 4px;
+    }
+
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex: 1;
+      min-width: 260px;
+    }
+
+    .slider-label {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .slider-val-badge {
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--sample-color);
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 4px;
+      padding: 2px 8px;
+      min-width: 36px;
+      text-align: center;
+    }
+
+    .slider {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 6px;
+      border-radius: 3px;
+      background: #e2e8f0;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 2px solid var(--sample-color);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+      cursor: pointer;
+      transition: transform 0.12s ease;
+    }
+
+    .slider::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+      border-color: var(--sample-mean-color);
+    }
+
+    .slider::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 2px solid var(--sample-color);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+      cursor: pointer;
+    }
+
+    .action-buttons {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-sample {
+      background: var(--sample-color);
+      color: #ffffff;
+      border: 1px solid var(--sample-color);
+      font-family: var(--font-sans);
+      font-size: 0.86rem;
+      font-weight: 600;
+      padding: 7px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+      box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+    }
+
+    .btn-sample:hover {
+      background: #1d4ed8;
+      border-color: #1d4ed8;
+    }
+
+    .btn-sample:active {
+      transform: scale(0.98);
+    }
+
+    .btn-secondary {
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-secondary:hover {
+      background: #e2e8f0;
+    }
+
+    /* Sample Table */
+    .table-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .table-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .table-title {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .sample-table-container {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #ffffff;
+    }
+
+    .sample-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+    }
+
+    .sample-table td {
+      border: 1px solid var(--border-subtle);
+      padding: 6px 4px;
+      text-align: center;
+      width: 10%;
+      min-width: 58px;
+      color: var(--text);
+      transition: background-color 0.2s ease;
+    }
+
+    .sample-table td.updated {
+      animation: pulseCell 0.35s ease-out;
+    }
+
+    @keyframes pulseCell {
+      0% { background-color: rgba(37, 99, 235, 0.2); }
+      100% { background-color: transparent; }
+    }
+
+    .sample-table td.empty-cell {
+      background-color: #f8fafc;
+      color: #cbd5e1;
+    }
+
+    .cell-idx {
+      font-size: 0.65rem;
+      color: var(--text-light);
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .cell-val {
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    /* Scatter Plot Section */
+    .scatter-card {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .scatter-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .scatter-tab-group {
+      display: inline-flex;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2px;
+      gap: 2px;
+    }
+
+    .scatter-tab {
+      padding: 4px 10px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .scatter-tab.active {
+      background: #ffffff;
+      color: var(--text);
+      font-weight: 600;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .scatter-wrapper {
+      position: relative;
+      width: 100%;
+      height: 270px;
+      background: #fafafa;
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 20px 12px;
+      }
+      .pop-options-row {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .controls-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .slider-container {
+        width: 100%;
+      }
+      .action-buttons {
+        justify-content: flex-end;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- Navigation Back Link -->
+    <div class="nav-bar">
+      <a href="../index.html" class="back-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        Course Index
+      </a>
+    </div>
+
+    <!-- Header -->
+    <header>
+      <h1>Sample Mean (X̄)</h1>
+      <p class="intro">
+        Explore how the sample mean X̄ behaves as sample size <em>n</em> increases. Observe the sample distribution overlay on the true population and examine the empirical scatter plot of sample statistics vs. theoretical bounds.
+      </p>
+    </header>
+
+    <!-- 2. CONTROL BOX: Population Selector, Parameters, Sample Statistics, Slider, Sample Button -->
+    <div class="callout-xbar">
+      <!-- Population Selector -->
+      <div class="pop-options-row" style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 10px; margin-bottom: 2px;">
+        <div class="pop-options-left">
+          <span class="pop-options-label">Population:</span>
+          <button class="btn-choice active" data-pop="normal">Normal</button>
+          <button class="btn-choice" data-pop="uniform">Uniform</button>
+          <button class="btn-choice" data-pop="exponential">Right-Skewed</button>
+          <button class="btn-choice" data-pop="bimodal">Bimodal</button>
+          <button class="btn-choice" data-pop="die">Discrete Die (1–6)</button>
+        </div>
+      </div>
+
+      <div class="callout-header">
+        <div class="callout-title">
+          <span>Population Parameters &amp; Sample Statistics</span>
+        </div>
+      </div>
+
+      <!-- Population Parameters Row -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <span class="metric-label">Population Mean &mu;</span>
+          <span class="metric-value" id="popMeanVal">50.00</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Population Variance &sigma;&sup2;</span>
+          <span class="metric-value" id="popVarVal">100.00</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Population Std Dev &sigma;</span>
+          <span class="metric-value" id="popSdVal">10.00</span>
+        </div>
+      </div>
+
+      <!-- Sample Statistics Row -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <span class="metric-label">Sample Mean X̄</span>
+          <span class="metric-value" id="calcSampleMean">--</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Variance of X̄ = &sigma;&sup2; / n</span>
+          <span class="metric-value" id="calcTheoVar">--</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Sample Variance s&sup2;</span>
+          <span class="metric-value" id="calcSampleVar">--</span>
+        </div>
+      </div>
+
+      <!-- Slider & Action Row -->
+      <div class="controls-row">
+        <div class="slider-container">
+          <span class="slider-label">Sample Size <em>n</em>:</span>
+          <input type="range" class="slider" id="nSlider" min="1" max="100" value="10" step="1">
+          <span class="slider-val-badge" id="nValDisplay">10</span>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn-sample" id="btnSample" title="Draw a new random sample of size n from the population">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+            </svg>
+            Sample
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. SAMPLE/POP HISTOGRAM -->
+    <div class="card">
+      <!-- Histogram Header & Legend -->
+      <div class="plot-header">
+        <div class="plot-title">
+          <span>Population &amp; Sample Overlay Histogram (N = 100)</span>
+        </div>
+        <div class="plot-legend">
+          <div class="legend-item">
+            <div class="legend-swatch swatch-pop"></div>
+            <span>Population (N = 100)</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-swatch swatch-sample"></div>
+            <span>Sample (<em>n</em> = <span id="legendNVal">10</span>)</span>
+          </div>
+          <div class="legend-item">
+            <div class="swatch-line-mu"></div>
+            <span>&mu; (Pop. Mean)</span>
+          </div>
+          <div class="legend-item">
+            <div class="swatch-line-xbar"></div>
+            <span>X̄ (Sample Mean)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Histogram SVG Canvas -->
+      <div class="svg-wrapper" id="histWrapper">
+        <svg class="svg-plot" id="histSvg" viewBox="0 0 800 230" preserveAspectRatio="none"></svg>
+        <div class="plot-tooltip hidden" id="histTooltip"></div>
+      </div>
+    </div>
+
+    <!-- 4. SAMPLE MEAN VERSUS N SCATTERPLOT -->
+    <div class="card scatter-card">
+      <div class="scatter-controls">
+        <div class="plot-title">
+          <span>Sample Mean versus Number of Samples</span>
+          <span style="font-size: 0.78rem; font-weight: normal; color: var(--text-muted); margin-left: 6px;">
+            (<span id="historyCount">0</span> trials recorded)
+          </span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div class="scatter-tab-group">
+            <button class="scatter-tab active" data-view="mean">Mean X̄ vs n</button>
+            <button class="scatter-tab" data-view="variance">Variance &sigma;&sup2;/n vs n</button>
+          </div>
+          <button class="btn-secondary" id="btnClearHistory" style="padding: 4px 8px; font-size: 0.75rem;">Clear History</button>
+        </div>
+      </div>
+
+      <div class="scatter-wrapper" id="scatterWrapper">
+        <svg class="svg-plot" id="scatterSvg" viewBox="0 0 800 270" preserveAspectRatio="none"></svg>
+        <div class="plot-tooltip hidden" id="scatterTooltip"></div>
+      </div>
+    </div>
+
+    <!-- 5. SAMPLED VALUES TABLE -->
+    <div class="card">
+      <div class="table-section">
+        <div class="table-header">
+          <span class="table-title">Sampled Values Table (<em>n</em> = <span id="tableNVal">10</span>)</span>
+        </div>
+        <div class="sample-table-container">
+          <table class="sample-table" id="sampleTable">
+            <tbody id="sampleTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    /* ==========================================================================
+       POPULATION GENERATORS & CONFIGURATION
+       ========================================================================== */
+    const POPULATION_SIZE = 100;
+
+    const POPULATION_CONFIGS = {
+      normal: {
+        name: "Normal Distribution",
+        type: "continuous",
+        domain: [15, 85],
+        generateItem: () => {
+          let u = 0, v = 0;
+          while (u === 0) u = Math.random();
+          while (v === 0) v = Math.random();
+          const z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+          return 50 + 10 * z;
+        },
+        formatVal: (v) => v.toFixed(2)
+      },
+      uniform: {
+        name: "Continuous Uniform",
+        type: "continuous",
+        domain: [20, 80],
+        generateItem: () => 20 + Math.random() * (80 - 20),
+        formatVal: (v) => v.toFixed(2)
+      },
+      exponential: {
+        name: "Right-Skewed (Exponential)",
+        type: "continuous",
+        domain: [0, 80],
+        generateItem: () => {
+          const lambda = 0.05;
+          let u = Math.random();
+          while (u === 0) u = Math.random();
+          return -Math.log(u) / lambda;
+        },
+        formatVal: (v) => v.toFixed(2)
+      },
+      bimodal: {
+        name: "Bimodal Mixture",
+        type: "continuous",
+        domain: [10, 90],
+        generateItem: () => {
+          let u = 0, v = 0;
+          while (u === 0) u = Math.random();
+          while (v === 0) v = Math.random();
+          const z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+          return Math.random() < 0.5 ? (32 + 6 * z) : (68 + 7 * z);
+        },
+        formatVal: (v) => v.toFixed(2)
+      },
+      die: {
+        name: "Discrete Die Roll (1–6)",
+        type: "discrete",
+        domain: [0.5, 6.5],
+        generateItem: () => Math.floor(Math.random() * 6) + 1,
+        formatVal: (v) => Number.isInteger(v) ? v.toString() : v.toFixed(2)
+      }
+    };
+
+    /* ==========================================================================
+       APPLICATION STATE
+       ========================================================================== */
+    let currentPopKey = 'normal';
+    let populationData = []; // Exactly 100 items
+    let popMean = 50;
+    let popVariance = 100;
+    let popSd = 10;
+
+    let currentN = 10;
+    let currentSample = [];
+    let studentHistory = []; // Array of { n, sampleMean, sampleVar, theoVar, timestamp }
+    let scatterView = 'mean'; // 'mean' or 'variance'
+
+    /* ==========================================================================
+       DOM ELEMENTS
+       ========================================================================== */
+    const popStatsBadge = document.getElementById('popStatsBadge');
+    const popMeanVal = document.getElementById('popMeanVal');
+    const popVarVal = document.getElementById('popVarVal');
+    const popSdVal = document.getElementById('popSdVal');
+
+    const legendNVal = document.getElementById('legendNVal');
+    const tableNVal = document.getElementById('tableNVal');
+    const nValDisplay = document.getElementById('nValDisplay');
+    const nSlider = document.getElementById('nSlider');
+
+    const calcSampleMean = document.getElementById('calcSampleMean');
+    const calcTheoVar = document.getElementById('calcTheoVar');
+    const calcSampleVar = document.getElementById('calcSampleVar');
+
+    const sampleTableBody = document.getElementById('sampleTableBody');
+    const historyCount = document.getElementById('historyCount');
+
+    const histSvg = document.getElementById('histSvg');
+    const histWrapper = document.getElementById('histWrapper');
+    const histTooltip = document.getElementById('histTooltip');
+
+    const scatterSvg = document.getElementById('scatterSvg');
+    const scatterWrapper = document.getElementById('scatterWrapper');
+    const scatterTooltip = document.getElementById('scatterTooltip');
+
+    /* ==========================================================================
+       INITIALIZATION
+       ========================================================================== */
+    function init() {
+      setupEventListeners();
+      loadPopulation(currentPopKey, false);
+    }
+
+    function setupEventListeners() {
+      // Population choices
+      document.querySelectorAll('.btn-choice[data-pop]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.btn-choice[data-pop]').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const popKey = btn.getAttribute('data-pop');
+          loadPopulation(popKey, true);
+        });
+      });
+
+      // Sample size slider (1 to 100) - only updates number display, does not draw sample
+      nSlider.addEventListener('input', (e) => {
+        currentN = parseInt(e.target.value, 10);
+        nValDisplay.textContent = currentN;
+      });
+
+      // Sample button
+      document.getElementById('btnSample').addEventListener('click', () => {
+        drawSample(true);
+      });
+
+      // Clear history
+      document.getElementById('btnClearHistory').addEventListener('click', () => {
+        studentHistory = [];
+        updateHistoryCount();
+        renderScatterPlot();
+      });
+
+      // Scatter View toggle tabs
+      document.querySelectorAll('.scatter-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.scatter-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          scatterView = tab.getAttribute('data-view');
+          renderScatterPlot();
+        });
+      });
+
+      // Window resize re-renders SVGs
+      window.addEventListener('resize', () => {
+        renderHistogram();
+        renderScatterPlot();
+      });
+    }
+
+    function updateNLabels() {
+      legendNVal.textContent = currentN;
+      tableNVal.textContent = currentN;
+      nValDisplay.textContent = currentN;
+    }
+
+    /* ==========================================================================
+       POPULATION SETUP (N = 100 items)
+       ========================================================================== */
+    function loadPopulation(key, clearHistory = true) {
+      currentPopKey = key;
+      const config = POPULATION_CONFIGS[key];
+
+      // Generate exactly 100 population items
+      populationData = [];
+      for (let i = 0; i < POPULATION_SIZE; i++) {
+        populationData.push(config.generateItem());
+      }
+
+      // Calculate exact population mean & variance of this 100-item population
+      const sum = populationData.reduce((a, b) => a + b, 0);
+      popMean = sum / POPULATION_SIZE;
+      
+      const sumSqDiff = populationData.reduce((a, b) => a + Math.pow(b - popMean, 2), 0);
+      popVariance = sumSqDiff / POPULATION_SIZE;
+      popSd = Math.sqrt(popVariance);
+
+      // Update Population Badges
+      popMeanVal.textContent = popMean.toFixed(2);
+      popVarVal.textContent = popVariance.toFixed(2);
+      popSdVal.textContent = popSd.toFixed(2);
+
+      // Clear history on new population load
+      if (clearHistory) {
+        studentHistory = [];
+      }
+      updateHistoryCount();
+
+      // Draw sample from this population
+      drawSample(true);
+    }
+
+    /* ==========================================================================
+       SAMPLING LOGIC
+       ========================================================================== */
+    function drawSample(recordHistory = true) {
+      updateNLabels();
+      // Sample n items from the 100 population items (sample without replacement)
+      // Shuffle indices and take first currentN
+      const shuffled = [...populationData];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      currentSample = shuffled.slice(0, currentN);
+
+      // Sample Mean
+      const sum = currentSample.reduce((a, b) => a + b, 0);
+      const sampleMean = sum / currentN;
+
+      // Sample Variance
+      let sampleVar = 0;
+      if (currentN > 1) {
+        const sumSqDiff = currentSample.reduce((a, b) => a + Math.pow(b - sampleMean, 2), 0);
+        sampleVar = sumSqDiff / (currentN - 1);
+      }
+
+      // Theoretical Variance of Xbar = sigma^2 / n
+      const theoVar = popVariance / currentN;
+
+      // Update Callout Metrics (clean numbers only, no subtexts)
+      calcSampleMean.textContent = sampleMean.toFixed(2);
+      calcTheoVar.textContent = theoVar.toFixed(2);
+      calcSampleVar.textContent = currentN > 1 ? sampleVar.toFixed(2) : 'N/A';
+
+      // Record in History for Scatter Plot
+      if (recordHistory) {
+        studentHistory.push({
+          n: currentN,
+          sampleMean: sampleMean,
+          sampleVar: sampleVar,
+          theoVar: theoVar,
+          popMean: popMean,
+          popVariance: popVariance,
+          timestamp: Date.now()
+        });
+        updateHistoryCount();
+      }
+
+      // Update UI components
+      renderSampleTable();
+      renderHistogram();
+      renderScatterPlot();
+    }
+
+    function updateHistoryCount() {
+      historyCount.textContent = studentHistory.length;
+    }
+
+    /* ==========================================================================
+       SAMPLE TABLE RENDERING
+       ========================================================================== */
+    function renderSampleTable() {
+      const config = POPULATION_CONFIGS[currentPopKey];
+      sampleTableBody.innerHTML = '';
+
+      const maxCols = 10;
+      const totalRows = Math.ceil(currentN / maxCols);
+
+      for (let r = 0; r < totalRows; r++) {
+        const tr = document.createElement('tr');
+        for (let c = 0; c < maxCols; c++) {
+          const idx = r * maxCols + c;
+          const td = document.createElement('td');
+          if (idx < currentN) {
+            const val = currentSample[idx];
+            td.className = 'updated';
+            td.innerHTML = `
+              <span class="cell-idx">X<sub>${idx + 1}</sub></span>
+              <span class="cell-val">${config.formatVal(val)}</span>
+            `;
+          } else {
+            td.className = 'empty-cell';
+            td.innerHTML = `<span class="cell-idx">-</span><span class="cell-val">-</span>`;
+          }
+          tr.appendChild(td);
+        }
+        sampleTableBody.appendChild(tr);
+      }
+    }
+
+    /* ==========================================================================
+       HISTOGRAM: ACTUAL FREQUENCY (COUNT) FOR POPULATION (100) & SAMPLE (n)
+       ========================================================================== */
+    function renderHistogram() {
+      const config = POPULATION_CONFIGS[currentPopKey];
+      const svg = histSvg;
+      svg.innerHTML = '';
+
+      const W = 800;
+      const H = 230;
+      const margin = { top: 22, right: 30, bottom: 42, left: 55 };
+      const plotW = W - margin.left - margin.right;
+      const plotH = H - margin.top - margin.bottom;
+
+      // Determine Domain bounds
+      let [xMin, xMax] = config.domain;
+      // Auto-expand domain slightly if data exceeds default
+      const allVals = [...populationData, ...currentSample];
+      const dataMin = Math.min(...allVals);
+      const dataMax = Math.max(...allVals);
+      if (dataMin < xMin) xMin = Math.floor(dataMin);
+      if (dataMax > xMax) xMax = Math.ceil(dataMax);
+
+      // Number of Bins
+      let numBins = 16;
+      if (config.type === 'discrete') {
+        numBins = 6;
+        xMin = 0.5;
+        xMax = 6.5;
+      }
+      const binWidth = (xMax - xMin) / numBins;
+
+      // Count actual frequencies for Population (N = 100)
+      const popCounts = new Array(numBins).fill(0);
+      populationData.forEach(v => {
+        let bIdx = Math.floor((v - xMin) / binWidth);
+        if (bIdx < 0) bIdx = 0;
+        if (bIdx >= numBins) bIdx = numBins - 1;
+        popCounts[bIdx]++;
+      });
+
+      // Count actual frequencies for Sample (size n)
+      const sampleCounts = new Array(numBins).fill(0);
+      currentSample.forEach(v => {
+        let bIdx = Math.floor((v - xMin) / binWidth);
+        if (bIdx < 0) bIdx = 0;
+        if (bIdx >= numBins) bIdx = numBins - 1;
+        sampleCounts[bIdx]++;
+      });
+
+      // Sample Mean
+      const sampleMean = currentSample.reduce((a, b) => a + b, 0) / currentN;
+
+      // Maximum frequency for Y scale
+      const maxPopCount = Math.max(...popCounts);
+      const maxY = Math.max(12, Math.ceil(maxPopCount * 1.18));
+
+      // Scales
+      const scaleX = (x) => margin.left + ((x - xMin) / (xMax - xMin)) * plotW;
+      const scaleY = (count) => margin.top + plotH - (count / maxY) * plotH;
+
+      // Grid & Axes
+      const gGrid = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+      // Horizontal grid lines (integer counts)
+      const yTicks = 4;
+      const yStep = Math.ceil(maxY / yTicks);
+      for (let count = 0; count <= maxY; count += yStep) {
+        const yPos = scaleY(count);
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', margin.left);
+        line.setAttribute('x2', margin.left + plotW);
+        line.setAttribute('y1', yPos);
+        line.setAttribute('y2', yPos);
+        line.setAttribute('stroke', '#f1f5f9');
+        line.setAttribute('stroke-dasharray', count === 0 ? 'none' : '3 3');
+        gGrid.appendChild(line);
+
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', margin.left - 8);
+        text.setAttribute('y', yPos + 4);
+        text.setAttribute('text-anchor', 'end');
+        text.setAttribute('font-family', 'JetBrains Mono');
+        text.setAttribute('font-size', '10px');
+        text.setAttribute('fill', '#94a3b8');
+        text.textContent = count.toString();
+        gGrid.appendChild(text);
+      }
+
+      // X axis ticks
+      const xTicksCount = config.type === 'discrete' ? 6 : 8;
+      for (let i = 0; i <= xTicksCount; i++) {
+        let xVal = xMin + ((xMax - xMin) / xTicksCount) * i;
+        if (config.type === 'discrete') {
+          if (i === 0) continue;
+          xVal = i;
+        }
+        const xPos = scaleX(xVal);
+
+        const tickLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        tickLine.setAttribute('x1', xPos);
+        tickLine.setAttribute('x2', xPos);
+        tickLine.setAttribute('y1', margin.top + plotH);
+        tickLine.setAttribute('y2', margin.top + plotH + 5);
+        tickLine.setAttribute('stroke', '#cbd5e1');
+        gGrid.appendChild(tickLine);
+
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', xPos);
+        text.setAttribute('y', margin.top + plotH + 18);
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('font-family', 'JetBrains Mono');
+        text.setAttribute('font-size', '11px');
+        text.setAttribute('fill', '#64748b');
+        text.textContent = config.type === 'discrete' ? xVal.toString() : xVal.toFixed(0);
+        gGrid.appendChild(text);
+      }
+      svg.appendChild(gGrid);
+
+      // Y-axis label: Actual Frequency
+      const yAxisLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      yAxisLabel.setAttribute('transform', `rotate(-90)`);
+      yAxisLabel.setAttribute('x', -(margin.top + plotH / 2));
+      yAxisLabel.setAttribute('y', 16);
+      yAxisLabel.setAttribute('text-anchor', 'middle');
+      yAxisLabel.setAttribute('font-family', 'Inter');
+      yAxisLabel.setAttribute('font-size', '11px');
+      yAxisLabel.setAttribute('font-weight', '500');
+      yAxisLabel.setAttribute('fill', '#94a3b8');
+      yAxisLabel.textContent = 'Actual Frequency (Count)';
+      svg.appendChild(yAxisLabel);
+
+      // 1. POPULATION BARS (ACTUAL FREQUENCY: SUMS TO 100)
+      const gPop = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      for (let i = 0; i < numBins; i++) {
+        const b0 = xMin + i * binWidth;
+        const b1 = b0 + binWidth;
+        const count = popCounts[i];
+        if (count === 0) continue;
+
+        const x0 = scaleX(b0);
+        const x1 = scaleX(b1);
+        const yTop = scaleY(count);
+        const yBottom = scaleY(0);
+        const barW = Math.max(1, x1 - x0 - 1.5);
+        const barH = yBottom - yTop;
+
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', x0 + 0.75);
+        rect.setAttribute('y', yTop);
+        rect.setAttribute('width', barW);
+        rect.setAttribute('height', Math.max(0, barH));
+        rect.setAttribute('fill', 'rgba(148, 163, 184, 0.28)');
+        rect.setAttribute('stroke', '#94a3b8');
+        rect.setAttribute('stroke-width', '1');
+        rect.setAttribute('rx', '2');
+
+        rect.addEventListener('mouseenter', (e) => {
+          showTooltip(histTooltip, histWrapper, e, `
+            <strong>Bin [${b0.toFixed(1)} – ${b1.toFixed(1)}]</strong><br>
+            Population Count: ${count} / 100<br>
+            Sample Count: ${sampleCounts[i]} / ${currentN}
+          `);
+        });
+        rect.addEventListener('mouseleave', () => hideTooltip(histTooltip));
+
+        gPop.appendChild(rect);
+      }
+      svg.appendChild(gPop);
+
+      // 2. SAMPLE BARS OVERLAID (ACTUAL FREQUENCY: SUMS TO n <= 100)
+      const gSample = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      for (let i = 0; i < numBins; i++) {
+        const b0 = xMin + i * binWidth;
+        const b1 = b0 + binWidth;
+        const count = sampleCounts[i];
+        if (count === 0) continue;
+
+        const x0 = scaleX(b0);
+        const x1 = scaleX(b1);
+        const yTop = scaleY(count);
+        const yBottom = scaleY(0);
+        const barW = Math.max(1, x1 - x0 - 1.5);
+        const barH = yBottom - yTop;
+
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', x0 + 0.75);
+        rect.setAttribute('y', yTop);
+        rect.setAttribute('width', barW);
+        rect.setAttribute('height', Math.max(0, barH));
+        rect.setAttribute('fill', 'rgba(37, 99, 235, 0.45)');
+        rect.setAttribute('stroke', '#2563eb');
+        rect.setAttribute('stroke-width', '1.5');
+        rect.setAttribute('rx', '2');
+        rect.style.cursor = 'pointer';
+
+        rect.addEventListener('mouseenter', (e) => {
+          showTooltip(histTooltip, histWrapper, e, `
+            <strong>Bin [${b0.toFixed(1)} – ${b1.toFixed(1)}]</strong><br>
+            Sample Count: ${count} / ${currentN}<br>
+            Population Count: ${popCounts[i]} / 100
+          `);
+        });
+        rect.addEventListener('mouseleave', () => hideTooltip(histTooltip));
+
+        gSample.appendChild(rect);
+      }
+      svg.appendChild(gSample);
+
+      // 3. VERTICAL REFERENCE LINES
+      const gLines = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+      // Pop Mean Line
+      const xMu = scaleX(popMean);
+      const lineMu = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      lineMu.setAttribute('x1', xMu);
+      lineMu.setAttribute('x2', xMu);
+      lineMu.setAttribute('y1', margin.top - 8);
+      lineMu.setAttribute('y2', margin.top + plotH);
+      lineMu.setAttribute('stroke', '#475569');
+      lineMu.setAttribute('stroke-width', '2');
+      lineMu.setAttribute('stroke-dasharray', '4 3');
+      gLines.appendChild(lineMu);
+
+      const textMu = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      textMu.setAttribute('x', xMu);
+      textMu.setAttribute('y', margin.top - 12);
+      textMu.setAttribute('text-anchor', 'middle');
+      textMu.setAttribute('font-family', 'Inter');
+      textMu.setAttribute('font-size', '11px');
+      textMu.setAttribute('font-weight', '600');
+      textMu.setAttribute('fill', '#475569');
+      textMu.textContent = `μ = ${popMean.toFixed(2)}`;
+      gLines.appendChild(textMu);
+
+      // Sample Mean Line
+      const xXbar = scaleX(sampleMean);
+      const lineXbar = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      lineXbar.setAttribute('x1', xXbar);
+      lineXbar.setAttribute('x2', xXbar);
+      lineXbar.setAttribute('y1', margin.top);
+      lineXbar.setAttribute('y2', margin.top + plotH);
+      lineXbar.setAttribute('stroke', '#2563eb');
+      lineXbar.setAttribute('stroke-width', '2.5');
+      gLines.appendChild(lineXbar);
+
+      const textXbar = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      textXbar.setAttribute('x', xXbar);
+      textXbar.setAttribute('y', margin.top + plotH + 34);
+      textXbar.setAttribute('text-anchor', 'middle');
+      textXbar.setAttribute('font-family', 'Inter');
+      textXbar.setAttribute('font-size', '11px');
+      textXbar.setAttribute('font-weight', '700');
+      textXbar.setAttribute('fill', '#2563eb');
+      textXbar.textContent = `X̄ = ${sampleMean.toFixed(2)}`;
+      gLines.appendChild(textXbar);
+
+      svg.appendChild(gLines);
+    }
+
+    /* ==========================================================================
+       SCATTER PLOT: SAMPLE MEAN VERSUS NUMBER OF SAMPLES
+       ========================================================================== */
+    function renderScatterPlot() {
+      const svg = scatterSvg;
+      svg.innerHTML = '';
+
+      const W = 800;
+      const H = 270;
+      const margin = { top: 25, right: 35, bottom: 42, left: 60 };
+      const plotW = W - margin.left - margin.right;
+      const plotH = H - margin.top - margin.bottom;
+
+      // X Range is sample size n: 1 to 100
+      const nMin = 1;
+      const nMax = 100;
+      const scaleN = (n) => margin.left + ((n - nMin) / (nMax - nMin)) * plotW;
+
+      if (scatterView === 'mean') {
+        // Sample Mean Xbar vs n
+        const yMin = popMean - 2.8 * popSd;
+        const yMax = popMean + 2.8 * popSd;
+        const scaleY = (y) => margin.top + plotH - ((y - yMin) / (yMax - yMin)) * plotH;
+
+        drawScatterGrid(svg, margin, plotW, plotH, nMin, nMax, yMin, yMax, scaleN, scaleY, 'Sample Size (n)', 'Sample Mean (X̄)');
+
+        // Theoretical Confidence Funnel
+        const funnelUpper = [];
+        const funnelLower = [];
+        for (let n = 1; n <= 100; n += 1) {
+          const se = popSd / Math.sqrt(n);
+          funnelUpper.push(`${scaleN(n)},${scaleY(popMean + 2 * se)}`);
+          funnelLower.push(`${scaleN(n)},${scaleY(popMean - 2 * se)}`);
+        }
+
+        const polygonPoints = [...funnelUpper, ...funnelLower.reverse()].join(' ');
+        const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        poly.setAttribute('points', polygonPoints);
+        poly.setAttribute('fill', 'rgba(37, 99, 235, 0.08)');
+        poly.setAttribute('stroke', 'none');
+        svg.appendChild(poly);
+
+        const pathUpper = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+        pathUpper.setAttribute('points', funnelUpper.join(' '));
+        pathUpper.setAttribute('fill', 'none');
+        pathUpper.setAttribute('stroke', '#93c5fd');
+        pathUpper.setAttribute('stroke-width', '1.5');
+        pathUpper.setAttribute('stroke-dasharray', '4 3');
+        svg.appendChild(pathUpper);
+
+        const pathLower = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+        pathLower.setAttribute('points', funnelLower.reverse().join(' '));
+        pathLower.setAttribute('fill', 'none');
+        pathLower.setAttribute('stroke', '#93c5fd');
+        pathLower.setAttribute('stroke-width', '1.5');
+        pathLower.setAttribute('stroke-dasharray', '4 3');
+        svg.appendChild(pathLower);
+
+        // True Population Mean Line
+        const yMu = scaleY(popMean);
+        const lineMu = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        lineMu.setAttribute('x1', margin.left);
+        lineMu.setAttribute('x2', margin.left + plotW);
+        lineMu.setAttribute('y1', yMu);
+        lineMu.setAttribute('y2', yMu);
+        lineMu.setAttribute('stroke', '#475569');
+        lineMu.setAttribute('stroke-width', '2');
+        lineMu.setAttribute('stroke-dasharray', '5 4');
+        svg.appendChild(lineMu);
+
+        const textMu = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        textMu.setAttribute('x', margin.left + plotW + 5);
+        textMu.setAttribute('y', yMu + 4);
+        textMu.setAttribute('font-family', 'Inter');
+        textMu.setAttribute('font-size', '10px');
+        textMu.setAttribute('font-weight', '600');
+        textMu.setAttribute('fill', '#475569');
+        textMu.textContent = `μ=${popMean.toFixed(1)}`;
+        svg.appendChild(textMu);
+
+        // Plot Student Sample Points
+        studentHistory.forEach((pt, idx) => {
+          const cx = scaleN(pt.n);
+          const cy = scaleY(pt.sampleMean);
+          const isLatest = idx === studentHistory.length - 1;
+
+          const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          circle.setAttribute('cx', cx);
+          circle.setAttribute('cy', cy);
+          circle.setAttribute('r', isLatest ? '5' : '3.5');
+          circle.setAttribute('fill', isLatest ? '#2563eb' : 'rgba(37, 99, 235, 0.6)');
+          circle.setAttribute('stroke', isLatest ? '#ffffff' : '#1d4ed8');
+          circle.setAttribute('stroke-width', isLatest ? '2' : '1');
+          circle.style.cursor = 'pointer';
+
+          circle.addEventListener('mouseenter', (e) => {
+            showTooltip(scatterTooltip, scatterWrapper, e, `
+              <strong>Sample #${idx + 1}</strong><br>
+              Sample size (n): ${pt.n}<br>
+              Sample Mean (X̄): ${pt.sampleMean.toFixed(2)}<br>
+              Pop Mean (μ): ${pt.popMean.toFixed(2)}<br>
+              Difference: ${(pt.sampleMean - pt.popMean).toFixed(2)}
+            `);
+          });
+          circle.addEventListener('mouseleave', () => hideTooltip(scatterTooltip));
+
+          svg.appendChild(circle);
+        });
+
+      } else {
+        // Variance of Xbar = sigma^2 / n vs n
+        const yMin = 0;
+        const yMax = popVariance * 1.05;
+        const scaleY = (y) => margin.top + plotH - (y / yMax) * plotH;
+
+        drawScatterGrid(svg, margin, plotW, plotH, nMin, nMax, yMin, yMax, scaleN, scaleY, 'Sample Size (n)', 'Var(X̄) = σ²/n');
+
+        // Theoretical Curve: sigma^2 / n
+        const theoPoints = [];
+        for (let n = 1; n <= 100; n += 1) {
+          const v = popVariance / n;
+          theoPoints.push(`${scaleN(n)},${scaleY(v)}`);
+        }
+
+        const pathTheo = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+        pathTheo.setAttribute('points', theoPoints.join(' '));
+        pathTheo.setAttribute('fill', 'none');
+        pathTheo.setAttribute('stroke', '#2563eb');
+        pathTheo.setAttribute('stroke-width', '2');
+        svg.appendChild(pathTheo);
+
+        // Theoretical curve label
+        const textLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        textLabel.setAttribute('x', scaleN(25));
+        textLabel.setAttribute('y', scaleY(popVariance / 25) - 10);
+        textLabel.setAttribute('font-family', 'JetBrains Mono');
+        textLabel.setAttribute('font-size', '11px');
+        textLabel.setAttribute('font-weight', '600');
+        textLabel.setAttribute('fill', '#2563eb');
+        textLabel.textContent = 'Theoretical Var(X̄) = σ²/n';
+        svg.appendChild(textLabel);
+
+        // Plot Student Calculated Variances
+        studentHistory.forEach((pt, idx) => {
+          const cx = scaleN(pt.n);
+          const cy = scaleY(pt.theoVar);
+          const isLatest = idx === studentHistory.length - 1;
+
+          const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          circle.setAttribute('cx', cx);
+          circle.setAttribute('cy', cy);
+          circle.setAttribute('r', isLatest ? '5' : '3.5');
+          circle.setAttribute('fill', isLatest ? '#d97706' : 'rgba(217, 119, 6, 0.7)');
+          circle.setAttribute('stroke', isLatest ? '#ffffff' : '#b45309');
+          circle.setAttribute('stroke-width', isLatest ? '2' : '1');
+          circle.style.cursor = 'pointer';
+
+          circle.addEventListener('mouseenter', (e) => {
+            showTooltip(scatterTooltip, scatterWrapper, e, `
+              <strong>Sample #${idx + 1}</strong><br>
+              Sample size (n): ${pt.n}<br>
+              Var(X̄) = σ²/n: ${pt.theoVar.toFixed(2)}<br>
+              Sample s²: ${pt.n > 1 ? pt.sampleVar.toFixed(2) : 'N/A'}
+            `);
+          });
+          circle.addEventListener('mouseleave', () => hideTooltip(scatterTooltip));
+
+          svg.appendChild(circle);
+        });
+      }
+
+      // Empty State Prompt
+      if (studentHistory.length === 0) {
+        const textEmpty = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        textEmpty.setAttribute('x', margin.left + plotW / 2);
+        textEmpty.setAttribute('y', margin.top + plotH / 2);
+        textEmpty.setAttribute('text-anchor', 'middle');
+        textEmpty.setAttribute('font-family', 'Inter');
+        textEmpty.setAttribute('font-size', '13px');
+        textEmpty.setAttribute('fill', '#94a3b8');
+        textEmpty.textContent = 'Click "Sample" or move the n slider to generate data points.';
+        svg.appendChild(textEmpty);
+      }
+    }
+
+    function drawScatterGrid(svg, margin, plotW, plotH, xMin, xMax, yMin, yMax, scaleX, scaleY, xLabel, yLabel) {
+      const gGrid = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+      // Horizontal grid lines
+      const yTicks = 5;
+      for (let i = 0; i <= yTicks; i++) {
+        const yVal = yMin + ((yMax - yMin) / yTicks) * i;
+        const yPos = scaleY(yVal);
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', margin.left);
+        line.setAttribute('x2', margin.left + plotW);
+        line.setAttribute('y1', yPos);
+        line.setAttribute('y2', yPos);
+        line.setAttribute('stroke', '#f1f5f9');
+        line.setAttribute('stroke-dasharray', '3 3');
+        gGrid.appendChild(line);
+
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', margin.left - 8);
+        text.setAttribute('y', yPos + 4);
+        text.setAttribute('text-anchor', 'end');
+        text.setAttribute('font-family', 'JetBrains Mono');
+        text.setAttribute('font-size', '10px');
+        text.setAttribute('fill', '#94a3b8');
+        text.textContent = yVal.toFixed(1);
+        gGrid.appendChild(text);
+      }
+
+      // Vertical grid lines for n: 10, 20, 30, ..., 100
+      for (let n = 10; n <= 100; n += 10) {
+        const xPos = scaleX(n);
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', xPos);
+        line.setAttribute('x2', xPos);
+        line.setAttribute('y1', margin.top);
+        line.setAttribute('y2', margin.top + plotH);
+        line.setAttribute('stroke', '#f8fafc');
+        gGrid.appendChild(line);
+
+        const tickLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        tickLine.setAttribute('x1', xPos);
+        tickLine.setAttribute('x2', xPos);
+        tickLine.setAttribute('y1', margin.top + plotH);
+        tickLine.setAttribute('y2', margin.top + plotH + 5);
+        tickLine.setAttribute('stroke', '#cbd5e1');
+        gGrid.appendChild(tickLine);
+
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', xPos);
+        text.setAttribute('y', margin.top + plotH + 18);
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('font-family', 'JetBrains Mono');
+        text.setAttribute('font-size', '11px');
+        text.setAttribute('fill', '#64748b');
+        text.textContent = n.toString();
+        gGrid.appendChild(text);
+      }
+
+      // Axis Labels
+      const xText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      xText.setAttribute('x', margin.left + plotW / 2);
+      xText.setAttribute('y', margin.top + plotH + 34);
+      xText.setAttribute('text-anchor', 'middle');
+      xText.setAttribute('font-family', 'Inter');
+      xText.setAttribute('font-size', '11px');
+      xText.setAttribute('font-weight', '500');
+      xText.setAttribute('fill', '#64748b');
+      xText.textContent = xLabel;
+      gGrid.appendChild(xText);
+
+      const yText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      yText.setAttribute('transform', 'rotate(-90)');
+      yText.setAttribute('x', -(margin.top + plotH / 2));
+      yText.setAttribute('y', 16);
+      yText.setAttribute('text-anchor', 'middle');
+      yText.setAttribute('font-family', 'Inter');
+      yText.setAttribute('font-size', '11px');
+      yText.setAttribute('font-weight', '500');
+      yText.setAttribute('fill', '#64748b');
+      yText.textContent = yLabel;
+      gGrid.appendChild(yText);
+
+      svg.appendChild(gGrid);
+    }
+
+    /* ==========================================================================
+       TOOLTIP UTILITIES
+       ========================================================================== */
+    function showTooltip(tooltipEl, wrapperEl, event, htmlContent) {
+      const rect = wrapperEl.getBoundingClientRect();
+      const x = event.clientX - rect.left + 12;
+      const y = event.clientY - rect.top - 12;
+
+      tooltipEl.innerHTML = htmlContent;
+      tooltipEl.style.left = `${Math.min(x, rect.width - 160)}px`;
+      tooltipEl.style.top = `${Math.max(8, y)}px`;
+      tooltipEl.classList.remove('hidden');
+    }
+
+    function hideTooltip(tooltipEl) {
+      tooltipEl.classList.add('hidden');
+    }
+
+    // Start on DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
