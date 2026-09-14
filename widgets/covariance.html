@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Covariance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --border-subtle: #f1f5f9;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      padding: 40px 20px 80px;
+      display: flex;
+      justify-content: center;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 860px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Navigation Back Link */
+    .nav-bar {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      margin-bottom: -10px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+
+    .back-link:hover {
+      color: var(--text);
+    }
+
+    /* Header & Description */
+    header {
+      margin-bottom: 2px;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 600;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+
+    .description {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    /* Side-by-Side: Main Plot & Compressed Data Table */
+    .main-split {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    @media (max-width: 720px) {
+      .main-split {
+        flex-direction: column;
+      }
+    }
+
+    .plot-container {
+      flex: 1;
+      min-width: 0;
+    }
+
+    svg.scatter-svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      overflow: visible;
+    }
+
+    .axis-line {
+      stroke: #cbd5e1;
+      stroke-width: 1.2;
+    }
+
+    .grid-line {
+      stroke: #f1f5f9;
+      stroke-width: 1;
+    }
+
+    .mean-line {
+      stroke: #94a3b8;
+      stroke-width: 1.4;
+      stroke-dasharray: 3 3;
+    }
+
+    .axis-text {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      fill: #64748b;
+    }
+
+    .axis-title {
+      font-family: var(--font-sans);
+      font-size: 11.5px;
+      font-weight: 500;
+      fill: #334155;
+    }
+
+    .mean-tag {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      fill: #64748b;
+    }
+
+    .dot {
+      fill: var(--primary);
+      stroke: #ffffff;
+      stroke-width: 1.5;
+      transition: r 0.1s ease;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    .dot:hover {
+      r: 6.5;
+      fill: var(--primary-dark);
+    }
+
+    .dot.dragging {
+      cursor: grabbing !important;
+      r: 7.5;
+      fill: #1e3a8a;
+      stroke: #ffffff;
+      stroke-width: 2.2;
+    }
+
+    /* Compressed Data Table */
+    .table-container {
+      width: 235px;
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 720px) {
+      .table-container {
+        width: 100%;
+        max-width: 320px;
+      }
+    }
+
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    table.data-table th {
+      background: #f8fafc;
+      padding: 6px 4px;
+      font-weight: 600;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+      font-size: 0.76rem;
+    }
+
+    table.data-table td {
+      padding: 2.5px 4px;
+      border-bottom: 1px solid var(--border-subtle);
+      text-align: center;
+    }
+
+    table.data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .table-input {
+      width: 100%;
+      max-width: 68px;
+      padding: 3px 2px;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      outline: none;
+      background: #ffffff;
+      -webkit-appearance: none;
+      -moz-appearance: textfield;
+    }
+
+    .table-input::-webkit-outer-spin-button,
+    .table-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .table-input:focus {
+      border-color: var(--primary);
+    }
+
+    /* Preset Buttons */
+    .buttons-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: var(--text);
+      padding: 6px 16px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: var(--font-sans);
+      transition: all 0.15s ease;
+    }
+
+    .btn:hover {
+      background: #f8fafc;
+      border-color: #94a3b8;
+    }
+
+    .btn.active {
+      background: #0f172a;
+      border-color: #0f172a;
+      color: #ffffff;
+    }
+
+    /* Info Box */
+    .info-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px 16px;
+      background: #fafafa;
+    }
+
+    @media (max-width: 600px) {
+      .info-bar {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .info-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .info-label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .info-value {
+      font-family: var(--font-mono);
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    /* Alternate Metrics */
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #0f172a;
+      margin-bottom: 12px;
+      letter-spacing: -0.01em;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    .metric-card {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .metric-card.highlight-card {
+      border-color: #bfdbfe;
+    }
+
+    .metric-header {
+      background: #f8fafc;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: #0f172a;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .metric-footer-note {
+      background: #eff6ff;
+      border-top: 1px solid #dbeafe;
+      padding: 5px 12px;
+      font-size: 0.74rem;
+      font-weight: 600;
+      color: var(--primary);
+      text-align: center;
+      letter-spacing: 0.01em;
+    }
+
+    table.mini-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+    }
+
+    table.mini-table td {
+      padding: 3px 12px;
+      border-bottom: 1px solid #f8fafc;
+      text-align: right;
+    }
+
+    table.mini-table td:first-child {
+      text-align: left;
+      color: #94a3b8;
+      width: 30px;
+    }
+
+    .metric-mean-row {
+      background: #f8fafc;
+      padding: 7px 12px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      font-weight: 600;
+      font-family: var(--font-mono);
+    }
+
+    .metric-mean-label {
+      font-family: var(--font-sans);
+      font-weight: 500;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    
+    <!-- Navigation Back Link -->
+    <div class="nav-bar">
+      <a href="../index.html" class="back-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        Course Index
+      </a>
+    </div>
+
+    <!-- Description -->
+    <header>
+      <h1>Covariance</h1>
+      <p class="description">
+        This dataset contains 10 observations of daily park activity: <strong>X</strong> represents the number of birds seen in the park, and <strong>Y</strong> represents the daily number of park visitors.
+      </p>
+    </header>
+
+    <!-- 2. Scatter Plot & Compressed Data Table Side-by-Side -->
+    <div class="main-split">
+      <div class="plot-container">
+        <svg id="scatterSvg" class="scatter-svg" viewBox="0 0 580 360"></svg>
+      </div>
+
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width: 24px;">#</th>
+              <th>Birds (X)</th>
+              <th>Visitors (Y)</th>
+            </tr>
+          </thead>
+          <tbody id="dataTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3. Buttons Row -->
+    <div class="buttons-row">
+      <button id="btnPositive" class="btn active">Positive</button>
+      <button id="btnNegative" class="btn">Negative</button>
+      <button id="btnNull" class="btn">Null</button>
+      <button id="btnRandom" class="btn">Random</button>
+    </div>
+
+    <!-- 4. Info Box -->
+    <div class="info-bar">
+      <div class="info-item">
+        <span class="info-label">&mu;<sub>X</sub> (Mean Birds)</span>
+        <span class="info-value" id="valMeanX">0.0</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">&mu;<sub>Y</sub> (Mean Visitors)</span>
+        <span class="info-value" id="valMeanY">0.0</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Cov(X, Y)</span>
+        <span class="info-value" id="valCov">0.0</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">&rho;<sub>X,Y</sub> (Correlation)</span>
+        <span class="info-value" id="valCorr">0.00</span>
+      </div>
+    </div>
+
+    <!-- 5. Alternate Metrics -->
+    <div>
+      <div class="section-title">Alternate Metrics</div>
+      <div class="metrics-grid" id="metricsGrid"></div>
+    </div>
+
+  </div>
+
+  <script>
+    const N = 10;
+
+    function generatePositiveExample() {
+      const slope = 1.4 + Math.random() * 1.5;
+      const startX = 10 + Math.floor(Math.random() * 8);
+      const step = 3 + Math.floor(Math.random() * 3);
+      const data = [];
+      const meanX = startX + (step * (N - 1)) / 2;
+      const meanY = 70 + Math.floor(Math.random() * 40);
+
+      for (let i = 0; i < N; i++) {
+        const x = startX + i * step + Math.floor(Math.random() * 5 - 2);
+        const noise = (Math.random() - 0.5) * 26;
+        const y = Math.max(15, Math.min(185, Math.round(meanY + slope * (x - meanX) + noise)));
+        data.push({ x: Math.max(5, Math.min(70, x)), y });
+      }
+      return data;
+    }
+
+    function generateNegativeExample() {
+      const slope = -(1.4 + Math.random() * 1.5);
+      const startX = 10 + Math.floor(Math.random() * 8);
+      const step = 3 + Math.floor(Math.random() * 3);
+      const data = [];
+      const meanX = startX + (step * (N - 1)) / 2;
+      const meanY = 80 + Math.floor(Math.random() * 40);
+
+      for (let i = 0; i < N; i++) {
+        const x = startX + i * step + Math.floor(Math.random() * 5 - 2);
+        const noise = (Math.random() - 0.5) * 26;
+        const y = Math.max(15, Math.min(185, Math.round(meanY + slope * (x - meanX) + noise)));
+        data.push({ x: Math.max(5, Math.min(70, x)), y });
+      }
+      return data;
+    }
+
+    function generateNullExample() {
+      let bestData = null;
+      let minAbsCov = Infinity;
+
+      for (let attempt = 0; attempt < 80; attempt++) {
+        const cand = [];
+        for (let i = 0; i < N; i++) {
+          const x = Math.floor(Math.random() * (60 - 10 + 1)) + 10;
+          const y = Math.floor(Math.random() * (180 - 20 + 1)) + 20;
+          cand.push({ x, y });
+        }
+        const meanX = cand.reduce((a, b) => a + b.x, 0) / N;
+        const meanY = cand.reduce((a, b) => a + b.y, 0) / N;
+        const cov = cand.reduce((sum, d) => sum + (d.x - meanX) * (d.y - meanY), 0) / (N - 1);
+        const absCov = Math.abs(cov);
+
+        if (absCov < minAbsCov) {
+          minAbsCov = absCov;
+          bestData = cand;
+        }
+        if (absCov <= 12) {
+          return cand;
+        }
+      }
+      return bestData;
+    }
+
+    let dataset = generatePositiveExample();
+
+    const scatterSvg = document.getElementById('scatterSvg');
+    const valMeanX = document.getElementById('valMeanX');
+    const valMeanY = document.getElementById('valMeanY');
+    const valCov = document.getElementById('valCov');
+    const valCorr = document.getElementById('valCorr');
+    const dataTableBody = document.getElementById('dataTableBody');
+    const metricsGrid = document.getElementById('metricsGrid');
+
+    const btnPositive = document.getElementById('btnPositive');
+    const btnNegative = document.getElementById('btnNegative');
+    const btnNull = document.getElementById('btnNull');
+    const btnRandom = document.getElementById('btnRandom');
+
+    function calculateStats() {
+      const xs = dataset.map(d => d.x);
+      const ys = dataset.map(d => d.y);
+
+      const meanX = xs.reduce((a, b) => a + b, 0) / N;
+      const meanY = ys.reduce((a, b) => a + b, 0) / N;
+
+      let sumDevProd = 0;
+      let sumSqX = 0;
+      let sumSqY = 0;
+
+      for (let i = 0; i < N; i++) {
+        const dx = dataset[i].x - meanX;
+        const dy = dataset[i].y - meanY;
+        sumDevProd += dx * dy;
+        sumSqX += dx * dx;
+        sumSqY += dy * dy;
+      }
+
+      // Sample covariance s_xy (n - 1)
+      const cov = sumDevProd / (N - 1);
+      const stdX = Math.sqrt(sumSqX / (N - 1));
+      const stdY = Math.sqrt(sumSqY / (N - 1));
+      const corr = (stdX > 0 && stdY > 0) ? (cov / (stdX * stdY)) : 0;
+
+      return {
+        meanX,
+        meanY,
+        cov,
+        corr,
+        minX: Math.min(...xs),
+        maxX: Math.max(...xs),
+        minY: Math.min(...ys),
+        maxY: Math.max(...ys)
+      };
+    }
+
+    let dragIndex = null;
+    let cachedBounds = null;
+
+    function renderScatterPlot(stats, isDragging = false) {
+      const w = 580;
+      const h = 360;
+      const pad = { top: 22, right: 30, bottom: 42, left: 48 };
+
+      if (!isDragging || !cachedBounds) {
+        const minX = Math.max(0, Math.floor(stats.minX / 10) * 10 - 10);
+        const maxX = Math.ceil(stats.maxX / 10) * 10 + 10;
+        const minY = Math.max(0, Math.floor(stats.minY / 20) * 20 - 20);
+        const maxY = Math.ceil(stats.maxY / 20) * 20 + 20;
+        cachedBounds = { minX, maxX, minY, maxY };
+      }
+
+      const { minX, maxX, minY, maxY } = cachedBounds;
+
+      const scaleX = x => pad.left + ((x - minX) / (maxX - minX)) * (w - pad.left - pad.right);
+      const scaleY = y => (h - pad.bottom) - ((y - minY) / (maxY - minY)) * (h - pad.top - pad.bottom);
+
+      let svgHtml = '';
+
+      // Grid & Ticks X
+      const xSpan = maxX - minX;
+      const xStep = xSpan <= 50 ? 10 : 20;
+      for (let x = minX; x <= maxX; x += xStep) {
+        const px = scaleX(x);
+        svgHtml += `<line class="grid-line" x1="${px}" y1="${pad.top}" x2="${px}" y2="${h - pad.bottom}" />`;
+        svgHtml += `<text class="axis-text" x="${px}" y="${h - pad.bottom + 15}" text-anchor="middle">${x}</text>`;
+      }
+
+      // Grid & Ticks Y
+      const ySpan = maxY - minY;
+      const yStep = ySpan <= 100 ? 20 : 40;
+      for (let y = minY; y <= maxY; y += yStep) {
+        const py = scaleY(y);
+        svgHtml += `<line class="grid-line" x1="${pad.left}" y1="${py}" x2="${w - pad.right}" y2="${py}" />`;
+        svgHtml += `<text class="axis-text" x="${pad.left - 6}" y="${py + 4}" text-anchor="end">${y}</text>`;
+      }
+
+      // Mean reference lines (dotted, greyed)
+      const meanPx = scaleX(stats.meanX);
+      const meanPy = scaleY(stats.meanY);
+      svgHtml += `<line class="mean-line" x1="${meanPx}" y1="${pad.top}" x2="${meanPx}" y2="${h - pad.bottom}" />`;
+      svgHtml += `<line class="mean-line" x1="${pad.left}" y1="${meanPy}" x2="${w - pad.right}" y2="${meanPy}" />`;
+
+      // Mean labels
+      svgHtml += `<text class="mean-tag" x="${meanPx + 4}" y="${pad.top + 10}">&mu;X = ${stats.meanX.toFixed(1)}</text>`;
+      svgHtml += `<text class="mean-tag" x="${w - pad.right - 4}" y="${meanPy - 5}" text-anchor="end">&mu;Y = ${stats.meanY.toFixed(1)}</text>`;
+
+      // Axes
+      svgHtml += `<line class="axis-line" x1="${pad.left}" y1="${h - pad.bottom}" x2="${w - pad.right}" y2="${h - pad.bottom}" />`;
+      svgHtml += `<line class="axis-line" x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${h - pad.bottom}" />`;
+
+      // Axis Titles
+      svgHtml += `<text class="axis-title" x="${w / 2}" y="${h - 8}" text-anchor="middle">Birds Seen (X)</text>`;
+      svgHtml += `<text class="axis-title" x="${14}" y="${h / 2}" text-anchor="middle" transform="rotate(-90, 14, ${h / 2})">Visitors (Y)</text>`;
+
+      // Data Points
+      dataset.forEach((d, i) => {
+        const px = scaleX(d.x);
+        const py = scaleY(d.y);
+        const isDraggingThis = dragIndex === i;
+        svgHtml += `<circle class="dot ${isDraggingThis ? 'dragging' : ''}" cx="${px}" cy="${py}" r="${isDraggingThis ? 7 : 4.5}" data-index="${i}"><title>Day ${i + 1}: Birds ${d.x}, Visitors ${d.y} (Drag to adjust)</title></circle>`;
+      });
+
+      scatterSvg.innerHTML = svgHtml;
+
+      // Attach pointerdown event to dots
+      scatterSvg.querySelectorAll('.dot').forEach(dot => {
+        dot.addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          dragIndex = parseInt(dot.getAttribute('data-index'), 10);
+          dot.classList.add('dragging');
+          [btnPositive, btnNegative, btnNull, btnRandom].forEach(b => b.classList.remove('active'));
+        });
+      });
+    }
+
+    function updateInfo(stats) {
+      valMeanX.textContent = stats.meanX.toFixed(1);
+      valMeanY.textContent = stats.meanY.toFixed(1);
+      valCov.textContent = (stats.cov > 0 ? '+' : '') + stats.cov.toFixed(1);
+      valCorr.textContent = (stats.corr > 0 ? '+' : '') + stats.corr.toFixed(2);
+    }
+
+    function renderTable() {
+      let html = '';
+      dataset.forEach((d, i) => {
+        html += `
+          <tr>
+            <td style="color: #94a3b8; font-family: var(--font-mono); font-size: 0.74rem;">${i + 1}</td>
+            <td><input type="number" step="1" class="table-input" data-index="${i}" data-col="x" value="${d.x}"></td>
+            <td><input type="number" step="1" class="table-input" data-index="${i}" data-col="y" value="${d.y}"></td>
+          </tr>
+        `;
+      });
+      dataTableBody.innerHTML = html;
+
+      const inputs = dataTableBody.querySelectorAll('.table-input');
+      inputs.forEach(input => {
+        input.addEventListener('input', (e) => {
+          const idx = parseInt(e.target.getAttribute('data-index'), 10);
+          const col = e.target.getAttribute('data-col');
+          const val = parseInt(e.target.value, 10);
+
+          if (!isNaN(val)) {
+            cachedBounds = null;
+            dataset[idx][col] = Math.max(0, val);
+            updateView({ skipTable: true });
+          }
+        });
+      });
+    }
+
+    function renderAlternateMetrics(stats) {
+      const metrics = [
+        {
+          label: 'X &minus; Y',
+          tag: '',
+          fn: (x, y) => x - y,
+          isCov: false
+        },
+        {
+          label: '|X &minus; Y|',
+          tag: '',
+          fn: (x, y) => Math.abs(x - y),
+          isCov: false
+        },
+        {
+          label: 'X &middot; Y',
+          tag: '',
+          fn: (x, y) => x * y,
+          isCov: false
+        },
+        {
+          label: '(X &minus; &mu;X) &minus; (Y &minus; &mu;Y)',
+          tag: '',
+          fn: (x, y) => (x - stats.meanX) - (y - stats.meanY),
+          isCov: false
+        },
+        {
+          label: '|(X &minus; &mu;X) &minus; (Y &minus; &mu;Y)|',
+          tag: '',
+          fn: (x, y) => Math.abs((x - stats.meanX) - (y - stats.meanY)),
+          isCov: false
+        },
+        {
+          label: '(X &minus; &mu;X) &middot; (Y &minus; &mu;Y)',
+          tag: 'Actual Covariance',
+          fn: (x, y) => (x - stats.meanX) * (y - stats.meanY),
+          isCov: true
+        }
+      ];
+
+      let gridHtml = '';
+
+      metrics.forEach(m => {
+        const vals = dataset.map(d => m.fn(d.x, d.y));
+        const mean = vals.reduce((a, b) => a + b, 0) / N;
+
+        let rowsHtml = '';
+        vals.forEach((v, i) => {
+          const formatted = Number.isInteger(v) ? v : v.toFixed(1);
+          rowsHtml += `
+            <tr>
+              <td>${i + 1}</td>
+              <td>${v > 0 && m.label !== 'X &middot; Y' ? '+' : ''}${formatted}</td>
+            </tr>
+          `;
+        });
+
+        const meanFormatted = Math.abs(mean) < 0.0001 ? '0.0' : ((mean > 0 ? '+' : '') + mean.toFixed(1));
+
+        gridHtml += `
+          <div class="metric-card ${m.isCov ? 'highlight-card' : ''}">
+            <div class="metric-header">
+              <span>${m.label}</span>
+            </div>
+            <table class="mini-table">
+              <tbody>${rowsHtml}</tbody>
+            </table>
+            <div class="metric-mean-row">
+              <span class="metric-mean-label">Mean:</span>
+              <span>${meanFormatted}</span>
+            </div>
+            ${m.tag ? `<div class="metric-footer-note">${m.tag}</div>` : ''}
+          </div>
+        `;
+      });
+
+      metricsGrid.innerHTML = gridHtml;
+    }
+
+    function updateView(options = {}) {
+      const stats = calculateStats();
+
+      renderScatterPlot(stats, options.isDragging);
+      updateInfo(stats);
+
+      if (!options.skipTable) {
+        renderTable();
+      }
+
+      renderAlternateMetrics(stats);
+    }
+
+    // Window pointer move and up events for smooth point dragging
+    window.addEventListener('pointermove', (e) => {
+      if (dragIndex === null || !cachedBounds) return;
+
+      const w = 580;
+      const h = 360;
+      const pad = { top: 22, right: 30, bottom: 42, left: 48 };
+      const { minX, maxX, minY, maxY } = cachedBounds;
+
+      const pt = scatterSvg.createSVGPoint();
+      pt.x = e.clientX;
+      pt.y = e.clientY;
+      const svgP = pt.matrixTransform(scatterSvg.getScreenCTM().inverse());
+
+      const clampedPx = Math.max(pad.left, Math.min(w - pad.right, svgP.x));
+      const clampedPy = Math.max(pad.top, Math.min(h - pad.bottom, svgP.y));
+
+      const newX = Math.round(minX + ((clampedPx - pad.left) / (w - pad.left - pad.right)) * (maxX - minX));
+      const newY = Math.round(minY + (((h - pad.bottom) - clampedPy) / (h - pad.top - pad.bottom)) * (maxY - minY));
+
+      dataset[dragIndex].x = Math.max(0, newX);
+      dataset[dragIndex].y = Math.max(0, newY);
+
+      // Dynamically sync table inputs without re-rendering table
+      const inX = document.querySelector(`.table-input[data-index="${dragIndex}"][data-col="x"]`);
+      const inY = document.querySelector(`.table-input[data-index="${dragIndex}"][data-col="y"]`);
+      if (inX) inX.value = dataset[dragIndex].x;
+      if (inY) inY.value = dataset[dragIndex].y;
+
+      updateView({ isDragging: true, skipTable: true });
+    });
+
+    function endDrag() {
+      if (dragIndex !== null) {
+        dragIndex = null;
+        cachedBounds = null;
+        updateView();
+      }
+    }
+
+    window.addEventListener('pointerup', endDrag);
+    window.addEventListener('pointercancel', endDrag);
+
+    btnPositive.addEventListener('click', () => {
+      cachedBounds = null;
+      dataset = generatePositiveExample();
+      btnPositive.classList.add('active');
+      btnNegative.classList.remove('active');
+      btnNull.classList.remove('active');
+      btnRandom.classList.remove('active');
+      updateView();
+    });
+
+    btnNegative.addEventListener('click', () => {
+      cachedBounds = null;
+      dataset = generateNegativeExample();
+      btnNegative.classList.add('active');
+      btnPositive.classList.remove('active');
+      btnNull.classList.remove('active');
+      btnRandom.classList.remove('active');
+      updateView();
+    });
+
+    btnNull.addEventListener('click', () => {
+      cachedBounds = null;
+      dataset = generateNullExample();
+      btnNull.classList.add('active');
+      btnPositive.classList.remove('active');
+      btnNegative.classList.remove('active');
+      btnRandom.classList.remove('active');
+      updateView();
+    });
+
+    btnRandom.addEventListener('click', () => {
+      cachedBounds = null;
+      btnRandom.classList.add('active');
+      btnPositive.classList.remove('active');
+      btnNegative.classList.remove('active');
+      btnNull.classList.remove('active');
+
+      // Truly a random draw for each data point from a uniform population
+      for (let i = 0; i < N; i++) {
+        const x = Math.floor(Math.random() * (60 - 10 + 1)) + 10;
+        const y = Math.floor(Math.random() * (180 - 20 + 1)) + 20;
+        dataset[i] = { x, y };
+      }
+      updateView();
+    });
+
+    // Initial render
+    updateView();
+  </script>
+</body>
+</html>
