@@ -9,6 +9,7 @@
     :root {
       --bg: #ffffff;
       --text: #333333;
+      --text-muted: #666666;
       --grey-light: #f5f5f5;
       --grey: #cccccc;
       --soft-blue: #a3c4f3;
@@ -27,6 +28,26 @@
     .container {
       width: 100%;
       max-width: 900px;
+    }
+    /* Navigation Back Link */
+    .nav-bar {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+    .back-link:hover {
+      color: var(--text);
     }
     .tabs {
       display: flex;
@@ -155,6 +176,17 @@
 <body>
 
 <div class="container">
+  <!-- Navigation Back Link -->
+  <div class="nav-bar">
+    <a href="../index.html" class="back-link">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      Course Index
+    </a>
+  </div>
+
   <div class="tabs">
     <button class="tab active" id="tab-Histogram" onclick="switchTab('Histogram')">Histogram</button>
     <button class="tab" id="tab-Boxplot" onclick="switchTab('Boxplot')">Boxplot</button>
