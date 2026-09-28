@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bernoulli Distribution</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --border-subtle: #f1f5f9;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-light: #dbeafe;
+      --accent-no: #64748b;
+      --accent-no-light: #f1f5f9;
+      --amber: #d97706;
+      --amber-light: #fef3c7;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      padding: 40px 20px 80px;
+      display: flex;
+      justify-content: center;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 880px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* Navigation Back Link */
+    .nav-bar {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      margin-bottom: -10px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+
+    .back-link:hover {
+      color: var(--text);
+    }
+
+    /* Header & Description */
+    header {
+      margin-bottom: 2px;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 600;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+
+    .description {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #0f172a;
+      margin-bottom: 12px;
+      letter-spacing: -0.01em;
+    }
+
+    /* Section 1: Side-by-Side Plots */
+    .plots-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 740px) {
+      .plots-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .plot-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .plot-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    .plot-subtext {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-weight: 500;
+    }
+
+    svg.chart-svg {
+      width: 100%;
+      height: auto;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #fafbfc;
+      display: block;
+    }
+
+    /* Section 2: Slider & Parameters */
+    .slider-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .slider-input {
+      flex: 1;
+      height: 6px;
+      border-radius: 3px;
+      background: #e2e8f0;
+      outline: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+    }
+
+    .slider-input::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+      transition: transform 0.1s, background-color 0.15s;
+    }
+
+    .slider-input::-webkit-slider-thumb:hover {
+      transform: scale(1.12);
+      background: var(--primary-dark);
+    }
+
+    .slider-input::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .slider-metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    @media (max-width: 640px) {
+      .slider-metrics {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .metric-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .metric-label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .metric-value {
+      font-family: var(--font-mono);
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    /* Section 3: Experimentation / Sampling */
+    .experiment-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .experiment-split {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+    }
+
+    @media (max-width: 740px) {
+      .experiment-split {
+        flex-direction: column;
+      }
+    }
+
+    .experiment-controls {
+      width: 240px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    @media (max-width: 740px) {
+      .experiment-controls {
+        width: 100%;
+      }
+    }
+
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: var(--text);
+      padding: 7px 14px;
+      border-radius: 5px;
+      font-size: 0.86rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-align: center;
+    }
+
+    .btn:hover {
+      border-color: #94a3b8;
+      background: #f8fafc;
+    }
+
+    .btn.primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    .btn.primary:hover {
+      background: var(--primary-dark);
+      border-color: var(--primary-dark);
+    }
+
+    .last-draw-card {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #fafbfc;
+    }
+
+    .last-draw-title {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .last-draw-value {
+      font-family: var(--font-mono);
+      font-size: 1.15rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .badge-yes {
+      color: var(--primary);
+    }
+
+    .badge-no {
+      color: var(--text-muted);
+    }
+
+    .stats-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+
+    .stats-table td {
+      padding: 4px 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .stats-table td:last-child {
+      text-align: right;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    .experiment-plot-container {
+      flex: 1;
+      min-width: 0;
+      width: 100%;
+    }
+
+    svg.dotplot-svg {
+      width: 100%;
+      height: auto;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #fafbfc;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- Navigation Back Link -->
+    <div class="nav-bar">
+      <a href="../index.html" class="back-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        Course Index
+      </a>
+    </div>
+
+    <!-- Header & Description -->
+    <header>
+      <h1>Bernoulli Distribution</h1>
+      <p class="description">
+        A single trial with two outcomes: 0 (No / Failure) with probability 1 &minus; p, and 1 (Yes / Success) with probability p.
+      </p>
+    </header>
+
+    <!-- 1. Side-by-Side Plots -->
+    <div class="plots-grid">
+      <!-- Left: Bernoulli PMF / Histogram -->
+      <div class="plot-panel">
+        <div class="plot-header">
+          <span>Distribution (Histogram)</span>
+          <span class="plot-subtext">P(X = x)</span>
+        </div>
+        <svg id="pmfSvg" class="chart-svg" viewBox="0 0 400 270"></svg>
+      </div>
+
+      <!-- Right: Standard Deviation Function & Marker Lines -->
+      <div class="plot-panel">
+        <div class="plot-header">
+          <span>Variance Function p(1 &minus; p)</span>
+          <span class="plot-subtext">&mu; and &sigma; markers</span>
+        </div>
+        <svg id="varSvg" class="chart-svg" viewBox="0 0 400 270"></svg>
+      </div>
+    </div>
+
+    <!-- 2. Slider Section -->
+    <section class="slider-section">
+      <div class="plot-header">
+        <span class="section-title" style="margin-bottom: 0;">Probability Parameter</span>
+        <span class="plot-subtext" id="sliderValDisplay">p = 0.50</span>
+      </div>
+
+      <div class="slider-row">
+        <input type="range" id="pSlider" class="slider-input" min="0" max="1" step="0.01" value="0.5">
+      </div>
+
+      <div class="slider-metrics">
+        <div class="metric-item">
+          <span class="metric-label">Mean (&mu; = p)</span>
+          <span class="metric-value" id="dispMean">0.50</span>
+        </div>
+        <div class="metric-item">
+          <span class="metric-label">Variance (p(1 &minus; p))</span>
+          <span class="metric-value" id="dispVar">0.250</span>
+        </div>
+        <div class="metric-item">
+          <span class="metric-label">Std Dev (&sigma;)</span>
+          <span class="metric-value" id="dispStd">0.500</span>
+        </div>
+        <div class="metric-item">
+          <span class="metric-label">P(No) : P(Yes)</span>
+          <span class="metric-value" id="dispRatio">0.50 : 0.50</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Experimentation Section -->
+    <section class="experiment-section">
+      <div class="plot-header">
+        <span class="section-title" style="margin-bottom: 0;">Empirical Sampling</span>
+        <span class="plot-subtext" id="sampleCountDisplay">Total: 0</span>
+      </div>
+
+      <div class="experiment-split">
+        <!-- Controls Column -->
+        <div class="experiment-controls">
+          <div class="btn-group">
+            <button id="btnSampleOne" class="btn primary">Draw 1 Sample</button>
+            <div class="btn-row">
+              <button id="btnSampleTen" class="btn" style="flex: 1;">+10</button>
+              <button id="btnSampleFifty" class="btn" style="flex: 1;">+50</button>
+              <button id="btnReset" class="btn">Reset</button>
+            </div>
+          </div>
+
+          <div class="last-draw-card">
+            <span class="last-draw-title">Last Drawn</span>
+            <span class="last-draw-value" id="lastDrawVal">&mdash;</span>
+          </div>
+
+          <table class="stats-table">
+            <tbody>
+              <tr>
+                <td>Yes (1) Count</td>
+                <td id="statYes">0</td>
+              </tr>
+              <tr>
+                <td>No (0) Count</td>
+                <td id="statNo">0</td>
+              </tr>
+              <tr>
+                <td>Sample Proportion p&#770;</td>
+                <td id="statProp">&mdash;</td>
+              </tr>
+              <tr>
+                <td>Expected Yes (n &times; p)</td>
+                <td id="statExpected">0.0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Stacked Dot Plot Column -->
+        <div class="experiment-plot-container">
+          <svg id="dotPlotSvg" class="dotplot-svg" viewBox="0 0 540 290"></svg>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    // State
+    let p = 0.50;
+    const samples = []; // Array of 0 or 1
+    let lastDraw = null;
+
+    // DOM Elements
+    const pSlider = document.getElementById('pSlider');
+    const sliderValDisplay = document.getElementById('sliderValDisplay');
+    const dispMean = document.getElementById('dispMean');
+    const dispVar = document.getElementById('dispVar');
+    const dispStd = document.getElementById('dispStd');
+    const dispRatio = document.getElementById('dispRatio');
+
+    const btnSampleOne = document.getElementById('btnSampleOne');
+    const btnSampleTen = document.getElementById('btnSampleTen');
+    const btnSampleFifty = document.getElementById('btnSampleFifty');
+    const btnReset = document.getElementById('btnReset');
+    const lastDrawVal = document.getElementById('lastDrawVal');
+    const sampleCountDisplay = document.getElementById('sampleCountDisplay');
+    const statYes = document.getElementById('statYes');
+    const statNo = document.getElementById('statNo');
+    const statProp = document.getElementById('statProp');
+    const statExpected = document.getElementById('statExpected');
+
+    const pmfSvg = document.getElementById('pmfSvg');
+    const varSvg = document.getElementById('varSvg');
+    const dotPlotSvg = document.getElementById('dotPlotSvg');
+
+    // Slider listener
+    pSlider.addEventListener('input', (e) => {
+      p = parseFloat(e.target.value);
+      renderAll();
+    });
+
+    // Sampling listeners
+    btnSampleOne.addEventListener('click', () => drawSamples(1));
+    btnSampleTen.addEventListener('click', () => drawSamples(10));
+    btnSampleFifty.addEventListener('click', () => drawSamples(50));
+    btnReset.addEventListener('click', resetSamples);
+
+    function drawSamples(count) {
+      for (let i = 0; i < count; i++) {
+        const val = Math.random() < p ? 1 : 0;
+        samples.push(val);
+        lastDraw = val;
+      }
+      renderSamplingSection();
+    }
+
+    function resetSamples() {
+      samples.length = 0;
+      lastDraw = null;
+      renderSamplingSection();
+    }
+
+    // --- Render Functions ---
+
+    function renderAll() {
+      renderParameterMetrics();
+      renderPMF();
+      renderVarPlot();
+      renderSamplingSection();
+    }
+
+    function renderParameterMetrics() {
+      const mean = p;
+      const variance = p * (1 - p);
+      const std = Math.sqrt(variance);
+
+      sliderValDisplay.textContent = `p = ${p.toFixed(2)}`;
+      dispMean.textContent = mean.toFixed(2);
+      dispVar.textContent = variance.toFixed(3);
+      dispStd.textContent = std.toFixed(3);
+      dispRatio.textContent = `${(1 - p).toFixed(2)} : ${p.toFixed(2)}`;
+    }
+
+    // 1. Histogram (Bernoulli PMF: 2 Bins)
+    function renderPMF() {
+      const svg = pmfSvg;
+      svg.innerHTML = '';
+
+      const W = 400;
+      const H = 270;
+      const padLeft = 46;
+      const padRight = 24;
+      const padTop = 36;
+      const padBottom = 42;
+
+      const plotW = W - padLeft - padRight;
+      const plotH = H - padTop - padBottom;
+
+      // Gridlines & Y-Axis (0.0 to 1.0)
+      const yTicks = [0.0, 0.25, 0.50, 0.75, 1.0];
+      yTicks.forEach(tick => {
+        const yPos = padTop + (1 - tick) * plotH;
+
+        // Line
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', padLeft);
+        line.setAttribute('y1', yPos);
+        line.setAttribute('x2', W - padRight);
+        line.setAttribute('y2', yPos);
+        line.setAttribute('stroke', tick === 0 ? '#cbd5e1' : '#e2e8f0');
+        line.setAttribute('stroke-width', tick === 0 ? '1.5' : '1');
+        svg.appendChild(line);
+
+        // Label
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        txt.setAttribute('x', padLeft - 8);
+        txt.setAttribute('y', yPos + 4);
+        txt.setAttribute('text-anchor', 'end');
+        txt.setAttribute('font-size', '11');
+        txt.setAttribute('fill', '#64748b');
+        txt.setAttribute('font-family', 'var(--font-mono)');
+        txt.textContent = tick.toFixed(2);
+        svg.appendChild(txt);
+      });
+
+      // Two Bins: 0 (No) and 1 (Yes)
+      const binWidth = 84;
+      const x0 = padLeft + plotW * 0.28 - binWidth / 2;
+      const x1 = padLeft + plotW * 0.72 - binWidth / 2;
+
+      const p0 = 1 - p;
+      const p1 = p;
+
+      const h0 = p0 * plotH;
+      const y0 = padTop + plotH - h0;
+
+      const h1 = p1 * plotH;
+      const y1 = padTop + plotH - h1;
+
+      // Bar 0
+      if (h0 > 0) {
+        const r0 = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        r0.setAttribute('x', x0);
+        r0.setAttribute('y', y0);
+        r0.setAttribute('width', binWidth);
+        r0.setAttribute('height', h0);
+        r0.setAttribute('rx', '4');
+        r0.setAttribute('fill', '#94a3b8');
+        r0.setAttribute('stroke', '#64748b');
+        r0.setAttribute('stroke-width', '1');
+        svg.appendChild(r0);
+      }
+
+      // Bar 1
+      if (h1 > 0) {
+        const r1 = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        r1.setAttribute('x', x1);
+        r1.setAttribute('y', y1);
+        r1.setAttribute('width', binWidth);
+        r1.setAttribute('height', h1);
+        r1.setAttribute('rx', '4');
+        r1.setAttribute('fill', '#2563eb');
+        r1.setAttribute('stroke', '#1d4ed8');
+        r1.setAttribute('stroke-width', '1');
+        svg.appendChild(r1);
+      }
+
+      // Top Value Labels
+      const val0 = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      val0.setAttribute('x', x0 + binWidth / 2);
+      val0.setAttribute('y', Math.max(padTop - 8, y0 - 8));
+      val0.setAttribute('text-anchor', 'middle');
+      val0.setAttribute('font-size', '12');
+      val0.setAttribute('font-weight', '600');
+      val0.setAttribute('font-family', 'var(--font-mono)');
+      val0.setAttribute('fill', '#334155');
+      val0.textContent = p0.toFixed(2);
+      svg.appendChild(val0);
+
+      const val1 = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      val1.setAttribute('x', x1 + binWidth / 2);
+      val1.setAttribute('y', Math.max(padTop - 8, y1 - 8));
+      val1.setAttribute('text-anchor', 'middle');
+      val1.setAttribute('font-size', '12');
+      val1.setAttribute('font-weight', '600');
+      val1.setAttribute('font-family', 'var(--font-mono)');
+      val1.setAttribute('fill', '#1d4ed8');
+      val1.textContent = p1.toFixed(2);
+      svg.appendChild(val1);
+
+      // Bottom Category Labels
+      const lbl0 = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      lbl0.setAttribute('x', x0 + binWidth / 2);
+      lbl0.setAttribute('y', padTop + plotH + 20);
+      lbl0.setAttribute('text-anchor', 'middle');
+      lbl0.setAttribute('font-size', '12');
+      lbl0.setAttribute('font-weight', '600');
+      lbl0.setAttribute('fill', '#1e293b');
+      lbl0.textContent = '0 (No)';
+      svg.appendChild(lbl0);
+
+      const sub0 = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      sub0.setAttribute('x', x0 + binWidth / 2);
+      sub0.setAttribute('y', padTop + plotH + 34);
+      sub0.setAttribute('text-anchor', 'middle');
+      sub0.setAttribute('font-size', '10');
+      sub0.setAttribute('fill', '#64748b');
+      sub0.textContent = 'Failure';
+      svg.appendChild(sub0);
+
+      const lbl1 = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      lbl1.setAttribute('x', x1 + binWidth / 2);
+      lbl1.setAttribute('y', padTop + plotH + 20);
+      lbl1.setAttribute('text-anchor', 'middle');
+      lbl1.setAttribute('font-size', '12');
+      lbl1.setAttribute('font-weight', '600');
+      lbl1.setAttribute('fill', '#1e293b');
+      lbl1.textContent = '1 (Yes)';
+      svg.appendChild(lbl1);
+
+      const sub1 = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      sub1.setAttribute('x', x1 + binWidth / 2);
+      sub1.setAttribute('y', padTop + plotH + 34);
+      sub1.setAttribute('text-anchor', 'middle');
+      sub1.setAttribute('font-size', '10');
+      sub1.setAttribute('fill', '#64748b');
+      sub1.textContent = 'Success';
+      svg.appendChild(sub1);
+    }
+
+    // 2. Variance Function p(1-p) with Mean & Std Dev vertical lines
+    function renderVarPlot() {
+      const svg = varSvg;
+      svg.innerHTML = '';
+
+      const W = 400;
+      const H = 270;
+      const padLeft = 44;
+      const padRight = 24;
+      const padTop = 36;
+      const padBottom = 42;
+
+      const plotW = W - padLeft - padRight;
+      const plotH = H - padTop - padBottom;
+
+      const yMax = 0.28; // p(1-p) peaks at 0.25
+
+      // Coordinate mapping helpers
+      const toX = (val) => padLeft + Math.min(Math.max(val, 0), 1) * plotW;
+      const toY = (val) => padTop + (1 - val / yMax) * plotH;
+
+      // Y Grid & Ticks (0, 0.05, 0.10, 0.15, 0.20, 0.25)
+      const yTicks = [0.0, 0.05, 0.10, 0.15, 0.20, 0.25];
+      yTicks.forEach(tick => {
+        const yPos = toY(tick);
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', padLeft);
+        line.setAttribute('y1', yPos);
+        line.setAttribute('x2', W - padRight);
+        line.setAttribute('y2', yPos);
+        line.setAttribute('stroke', tick === 0 ? '#cbd5e1' : '#e2e8f0');
+        line.setAttribute('stroke-width', tick === 0 ? '1.5' : '1');
+        svg.appendChild(line);
+
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        txt.setAttribute('x', padLeft - 6);
+        txt.setAttribute('y', yPos + 3.5);
+        txt.setAttribute('text-anchor', 'end');
+        txt.setAttribute('font-size', '10');
+        txt.setAttribute('fill', '#64748b');
+        txt.setAttribute('font-family', 'var(--font-mono)');
+        txt.textContent = tick.toFixed(2);
+        svg.appendChild(txt);
+      });
+
+      // X Grid & Ticks (0.0 to 1.0)
+      const xTicks = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0];
+      xTicks.forEach(tick => {
+        const xPos = toX(tick);
+
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        txt.setAttribute('x', xPos);
+        txt.setAttribute('y', padTop + plotH + 16);
+        txt.setAttribute('text-anchor', 'middle');
+        txt.setAttribute('font-size', '10');
+        txt.setAttribute('fill', '#64748b');
+        txt.setAttribute('font-family', 'var(--font-mono)');
+        txt.textContent = tick.toFixed(1);
+        svg.appendChild(txt);
+      });
+
+      // Curve: y = p(1-p)
+      let pathD = '';
+      const steps = 80;
+      for (let i = 0; i <= steps; i++) {
+        const curP = i / steps;
+        const curVar = curP * (1 - curP);
+        const x = toX(curP);
+        const y = toY(curVar);
+        if (i === 0) {
+          pathD += `M ${x.toFixed(2)} ${y.toFixed(2)}`;
+        } else {
+          pathD += ` L ${x.toFixed(2)} ${y.toFixed(2)}`;
+        }
+      }
+
+      // Fill area under curve
+      const areaD = `${pathD} L ${toX(1).toFixed(2)} ${toY(0).toFixed(2)} L ${toX(0).toFixed(2)} ${toY(0).toFixed(2)} Z`;
+      const areaPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      areaPath.setAttribute('d', areaD);
+      areaPath.setAttribute('fill', 'rgba(37, 99, 235, 0.06)');
+      svg.appendChild(areaPath);
+
+      // Stroke curve
+      const curve = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      curve.setAttribute('d', pathD);
+      curve.setAttribute('fill', 'none');
+      curve.setAttribute('stroke', '#2563eb');
+      curve.setAttribute('stroke-width', '2');
+      svg.appendChild(curve);
+
+      // Current operating point on curve
+      const curVar = p * (1 - p);
+      const mean = p;
+      const std = Math.sqrt(curVar);
+
+      const opPt = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      opPt.setAttribute('cx', toX(p));
+      opPt.setAttribute('cy', toY(curVar));
+      opPt.setAttribute('r', '4.5');
+      opPt.setAttribute('fill', '#2563eb');
+      opPt.setAttribute('stroke', '#ffffff');
+      opPt.setAttribute('stroke-width', '1.5');
+      svg.appendChild(opPt);
+
+      // Vertical Line 1: Mean (μ = p)
+      const xMean = toX(mean);
+      const meanLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      meanLine.setAttribute('x1', xMean);
+      meanLine.setAttribute('y1', padTop);
+      meanLine.setAttribute('x2', xMean);
+      meanLine.setAttribute('y2', padTop + plotH);
+      meanLine.setAttribute('stroke', '#2563eb');
+      meanLine.setAttribute('stroke-width', '1.75');
+      meanLine.setAttribute('stroke-dasharray', '4 3');
+      svg.appendChild(meanLine);
+
+      // Vertical Line 2: Standard Deviation (σ = √(p(1-p)))
+      const xStd = toX(std);
+      const stdLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      stdLine.setAttribute('x1', xStd);
+      stdLine.setAttribute('y1', padTop);
+      stdLine.setAttribute('x2', xStd);
+      stdLine.setAttribute('y2', padTop + plotH);
+      stdLine.setAttribute('stroke', '#d97706');
+      stdLine.setAttribute('stroke-width', '1.75');
+      stdLine.setAttribute('stroke-dasharray', '4 3');
+      svg.appendChild(stdLine);
+
+      // Labels at top of vertical lines
+      // Ensure labels don't collide if mean and std are close
+      let yOffsetMean = padTop - 14;
+      let yOffsetStd = padTop - 4;
+      if (Math.abs(xMean - xStd) < 42) {
+        yOffsetMean = padTop - 18;
+        yOffsetStd = padTop - 4;
+      }
+
+      const meanText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      meanText.setAttribute('x', xMean);
+      meanText.setAttribute('y', yOffsetMean);
+      meanText.setAttribute('text-anchor', 'middle');
+      meanText.setAttribute('font-size', '10.5');
+      meanText.setAttribute('font-weight', '600');
+      meanText.setAttribute('font-family', 'var(--font-mono)');
+      meanText.setAttribute('fill', '#1d4ed8');
+      meanText.textContent = `μ=${mean.toFixed(2)}`;
+      svg.appendChild(meanText);
+
+      const stdText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      stdText.setAttribute('x', xStd);
+      stdText.setAttribute('y', yOffsetStd);
+      stdText.setAttribute('text-anchor', 'middle');
+      stdText.setAttribute('font-size', '10.5');
+      stdText.setAttribute('font-weight', '600');
+      stdText.setAttribute('font-family', 'var(--font-mono)');
+      stdText.setAttribute('fill', '#b45309');
+      stdText.textContent = `σ=${std.toFixed(2)}`;
+      svg.appendChild(stdText);
+
+      // Legend in bottom or axis label
+      const xLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      xLabel.setAttribute('x', W - padRight);
+      xLabel.setAttribute('y', padTop + plotH + 32);
+      xLabel.setAttribute('text-anchor', 'end');
+      xLabel.setAttribute('font-size', '10');
+      xLabel.setAttribute('font-weight', '500');
+      xLabel.setAttribute('fill', '#64748b');
+      xLabel.textContent = 'Probability p';
+      svg.appendChild(xLabel);
+    }
+
+    // 3. Stacked Point Bar Plot (Experimentation)
+    function renderSamplingSection() {
+      const n = samples.length;
+      let countYes = 0;
+      let countNo = 0;
+      samples.forEach(s => {
+        if (s === 1) countYes++;
+        else countNo++;
+      });
+
+      // Update Numerical Stats
+      sampleCountDisplay.textContent = `Total: ${n}`;
+      statYes.textContent = countYes;
+      statNo.textContent = countNo;
+
+      if (n > 0) {
+        const prop = (countYes / n).toFixed(3);
+        statProp.textContent = `${prop} (${((countYes / n) * 100).toFixed(1)}%)`;
+      } else {
+        statProp.textContent = '—';
+      }
+
+      statExpected.textContent = (n * p).toFixed(1);
+
+      if (lastDraw !== null) {
+        if (lastDraw === 1) {
+          lastDrawVal.innerHTML = '<span class="badge-yes">&#10003; Yes (1)</span>';
+        } else {
+          lastDrawVal.innerHTML = '<span class="badge-no">&#10005; No (0)</span>';
+        }
+      } else {
+        lastDrawVal.innerHTML = '&mdash;';
+      }
+
+      // Render Stacked Dot Plot
+      renderDotPlot(countNo, countYes, n);
+    }
+
+    function renderDotPlot(countNo, countYes, total) {
+      const svg = dotPlotSvg;
+      svg.innerHTML = '';
+
+      const W = 540;
+      const H = 290;
+      const padLeft = 40;
+      const padRight = 40;
+      const padTop = 38;
+      const padBottom = 48;
+
+      const baselineY = H - padBottom;
+      const colNoX = padLeft + (W - padLeft - padRight) * 0.28;
+      const colYesX = padLeft + (W - padLeft - padRight) * 0.72;
+
+      // Baseline
+      const baseLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      baseLine.setAttribute('x1', padLeft);
+      baseLine.setAttribute('y1', baselineY);
+      baseLine.setAttribute('x2', W - padRight);
+      baseLine.setAttribute('y2', baselineY);
+      baseLine.setAttribute('stroke', '#cbd5e1');
+      baseLine.setAttribute('stroke-width', '1.5');
+      svg.appendChild(baseLine);
+
+      // Labels below stacks
+      const lblNo = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      lblNo.setAttribute('x', colNoX);
+      lblNo.setAttribute('y', baselineY + 20);
+      lblNo.setAttribute('text-anchor', 'middle');
+      lblNo.setAttribute('font-size', '13');
+      lblNo.setAttribute('font-weight', '600');
+      lblNo.setAttribute('fill', '#1e293b');
+      lblNo.textContent = 'No (0)';
+      svg.appendChild(lblNo);
+
+      const subNo = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      subNo.setAttribute('x', colNoX);
+      subNo.setAttribute('y', baselineY + 34);
+      subNo.setAttribute('text-anchor', 'middle');
+      subNo.setAttribute('font-size', '10.5');
+      subNo.setAttribute('fill', '#64748b');
+      subNo.setAttribute('font-family', 'var(--font-mono)');
+      subNo.textContent = total > 0 ? `${countNo} (${((countNo / total) * 100).toFixed(1)}%)` : '0 draws';
+      svg.appendChild(subNo);
+
+      const lblYes = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      lblYes.setAttribute('x', colYesX);
+      lblYes.setAttribute('y', baselineY + 20);
+      lblYes.setAttribute('text-anchor', 'middle');
+      lblYes.setAttribute('font-size', '13');
+      lblYes.setAttribute('font-weight', '600');
+      lblYes.setAttribute('fill', '#1e293b');
+      lblYes.textContent = 'Yes (1)';
+      svg.appendChild(lblYes);
+
+      const subYes = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      subYes.setAttribute('x', colYesX);
+      subYes.setAttribute('y', baselineY + 34);
+      subYes.setAttribute('text-anchor', 'middle');
+      subYes.setAttribute('font-size', '10.5');
+      subYes.setAttribute('fill', '#2563eb');
+      subYes.setAttribute('font-family', 'var(--font-mono)');
+      subYes.textContent = total > 0 ? `${countYes} (${((countYes / total) * 100).toFixed(1)}%)` : '0 draws';
+      svg.appendChild(subYes);
+
+      // Stacked dots rendering logic
+      // Configure dot size and columns based on total sample count to keep them neatly visible
+      const maxCountInCol = Math.max(countNo, countYes, 1);
+      let dotsPerRow = 5;
+      let radius = 6.5;
+      let stepY = 15;
+      let stepX = 15;
+
+      if (maxCountInCol > 60) {
+        dotsPerRow = 12;
+        radius = 3.5;
+        stepX = 9;
+        stepY = 9;
+      } else if (maxCountInCol > 30) {
+        dotsPerRow = 8;
+        radius = 4.5;
+        stepX = 11;
+        stepY = 11;
+      } else if (maxCountInCol > 15) {
+        dotsPerRow = 6;
+        radius = 5.5;
+        stepX = 13;
+        stepY = 13;
+      }
+
+      // Helper to compute dot coordinates within a stack
+      function getDotCoord(centerX, index) {
+        const colIdx = index % dotsPerRow;
+        const rowIdx = Math.floor(index / dotsPerRow);
+        const startX = centerX - ((dotsPerRow - 1) * stepX) / 2;
+        const cx = startX + colIdx * stepX;
+        const cy = baselineY - radius - 3 - rowIdx * stepY;
+        return { cx, cy };
+      }
+
+      // Draw all samples in order
+      let noIdx = 0;
+      let yesIdx = 0;
+      samples.forEach((val, i) => {
+        const isLatest = i === total - 1;
+        const isYes = val === 1;
+        const colCenterX = isYes ? colYesX : colNoX;
+        const curIdx = isYes ? yesIdx++ : noIdx++;
+        const { cx, cy } = getDotCoord(colCenterX, curIdx);
+
+        // Only draw if within bounds
+        if (cy >= padTop - 10) {
+          const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          circle.setAttribute('cx', cx.toFixed(1));
+          circle.setAttribute('cy', cy.toFixed(1));
+          circle.setAttribute('r', radius.toFixed(1));
+          circle.setAttribute('fill', isYes ? '#2563eb' : '#94a3b8');
+          circle.setAttribute('stroke', isYes ? '#1d4ed8' : '#64748b');
+          circle.setAttribute('stroke-width', '1');
+          svg.appendChild(circle);
+        }
+      });
+
+      // Stack Top Count Badges
+      if (total > 0) {
+        const topNoY = Math.max(padTop + 4, baselineY - Math.ceil(countNo / dotsPerRow) * stepY - 12);
+        const topYesY = Math.max(padTop + 4, baselineY - Math.ceil(countYes / dotsPerRow) * stepY - 12);
+
+        const noBadge = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        noBadge.setAttribute('x', colNoX);
+        noBadge.setAttribute('y', topNoY);
+        noBadge.setAttribute('text-anchor', 'middle');
+        noBadge.setAttribute('font-size', '11');
+        noBadge.setAttribute('font-weight', '600');
+        noBadge.setAttribute('font-family', 'var(--font-mono)');
+        noBadge.setAttribute('fill', '#64748b');
+        noBadge.textContent = `N=${countNo}`;
+        svg.appendChild(noBadge);
+
+        const yesBadge = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        yesBadge.setAttribute('x', colYesX);
+        yesBadge.setAttribute('y', topYesY);
+        yesBadge.setAttribute('text-anchor', 'middle');
+        yesBadge.setAttribute('font-size', '11');
+        yesBadge.setAttribute('font-weight', '600');
+        yesBadge.setAttribute('font-family', 'var(--font-mono)');
+        yesBadge.setAttribute('fill', '#1d4ed8');
+        yesBadge.textContent = `N=${countYes}`;
+        svg.appendChild(yesBadge);
+      } else {
+        // Placeholder text when empty
+        const emptyMsg = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        emptyMsg.setAttribute('x', W / 2);
+        emptyMsg.setAttribute('y', H / 2 - 10);
+        emptyMsg.setAttribute('text-anchor', 'middle');
+        emptyMsg.setAttribute('font-size', '13');
+        emptyMsg.setAttribute('fill', '#94a3b8');
+        emptyMsg.textContent = 'Click "Draw 1 Sample" to begin experiment';
+        svg.appendChild(emptyMsg);
+      }
+    }
+
+    // Initial render
+    renderAll();
+  </script>
+</body>
+</html>
