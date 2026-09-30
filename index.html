@@ -187,6 +187,12 @@
         title: "Bernoulli Distribution",
         description: "Interactive Bernoulli distribution widget featuring two-bin PMF histograms, variance function curves p(1-p), and empirical stacked-dot sampling.",
         icon: "bernoulli"
+      },
+      {
+        filename: "binomial.html",
+        title: "Binomial Distribution",
+        description: "Interactive Binomial distribution widget featuring PMF histograms, variance function curves np(1-p), dual sliders (p, n), and empirical stacked-dot sampling.",
+        icon: "binomial"
       }
     ];
 
@@ -302,6 +308,26 @@
           <path d="M 135 102 Q 185 22 235 102" fill="rgba(37, 99, 235, 0.08)" stroke="#2563eb" stroke-width="1.8"/>
           <line x1="185" y1="20" x2="185" y2="102" stroke="#d97706" stroke-width="1.5" stroke-dasharray="3 2"/>
           <circle cx="185" cy="42" r="3.5" fill="#2563eb"/>
+        </svg>
+      `,
+      binomial: `
+        <svg viewBox="0 0 260 125" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100%" height="100%" fill="#fafafa"/>
+          <line x1="20" y1="102" x2="240" y2="102" stroke="#d1d5db" stroke-width="1.2"/>
+          <!-- Binomial histogram on left -->
+          <rect x="28" y="92" width="10" height="10" rx="1.5" fill="#2563eb"/>
+          <rect x="42" y="75" width="10" height="27" rx="1.5" fill="#2563eb"/>
+          <rect x="56" y="52" width="10" height="50" rx="1.5" fill="#2563eb"/>
+          <rect x="70" y="38" width="10" height="64" rx="1.5" fill="#2563eb"/>
+          <rect x="84" y="52" width="10" height="50" rx="1.5" fill="#2563eb"/>
+          <rect x="98" y="75" width="10" height="27" rx="1.5" fill="#2563eb"/>
+          <rect x="112" y="92" width="10" height="10" rx="1.5" fill="#2563eb"/>
+          <!-- Mean indicator line -->
+          <line x1="75" y1="26" x2="75" y2="102" stroke="#d97706" stroke-width="1.5" stroke-dasharray="3 2"/>
+          <!-- Parabola np(1-p) on right -->
+          <path d="M 140 102 Q 188 22 236 102" fill="rgba(37, 99, 235, 0.08)" stroke="#2563eb" stroke-width="1.8"/>
+          <line x1="188" y1="22" x2="188" y2="102" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="3 2"/>
+          <circle cx="188" cy="42" r="3.5" fill="#2563eb"/>
         </svg>
       `,
       generic: `
