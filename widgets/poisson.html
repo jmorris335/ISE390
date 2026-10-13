@@ -250,6 +250,56 @@
       box-shadow: 0 0 0 2px var(--primary-light);
     }
 
+    /* Calculator Panel */
+    .calc-panel {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      padding: 10px 14px;
+      background: #fafbfc;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-top: 4px;
+    }
+
+    .calc-input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .calc-label {
+      font-size: 0.86rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .calc-num-input {
+      width: 72px;
+      text-align: center;
+    }
+
+    .calc-result-wrap {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      font-family: var(--font-mono);
+      flex-wrap: wrap;
+    }
+
+    .calc-math-expr {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+
+    .calc-result-number {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
     /* Row 3: Comparison Section */
     .comparison-section {
       display: flex;
@@ -427,6 +477,18 @@
         <input type="range" id="lambdaSlider" class="slider-input" min="0" max="12" step="0.1" value="4.0">
         <input type="number" id="lambdaInput" class="num-input" min="0" max="12" step="0.1" value="4.00">
       </div>
+
+      <!-- Poisson PMF Calculator for p(x) -->
+      <div class="calc-panel">
+        <div class="calc-input-wrap">
+          <label for="calcXInput" class="calc-label">Number of Events (x):</label>
+          <input type="number" id="calcXInput" class="num-input calc-num-input" min="0" step="1" value="4">
+        </div>
+        <div class="calc-result-wrap">
+          <span class="calc-math-expr">P(X = <span id="calcXVal">4</span>) =</span>
+          <span class="calc-result-number" id="calcResultNumber">0.1954</span>
+        </div>
+      </div>
     </section>
 
     <!-- 3. Comparison of PMFs: Binomial and Poisson Lines -->
@@ -565,7 +627,32 @@
     const dispMaxDiff = document.getElementById('dispMaxDiff');
     const comparisonSvg = document.getElementById('comparisonSvg');
 
+    // Calculator DOM Elements
+    const calcXInput = document.getElementById('calcXInput');
+    const calcXVal = document.getElementById('calcXVal');
+    const calcResultNumber = document.getElementById('calcResultNumber');
+    let calcX = 4;
+
     // --- Event Listeners ---
+
+    // Calculator Events (x input)
+    calcXInput.addEventListener('input', (e) => {
+      let val = parseInt(e.target.value, 10);
+      if (!isNaN(val)) {
+        calcX = Math.max(0, val);
+        updateCalculator();
+        renderHistogramSection();
+      }
+    });
+
+    calcXInput.addEventListener('change', (e) => {
+      let val = parseInt(e.target.value, 10);
+      if (isNaN(val) || val < 0) val = 0;
+      calcX = val;
+      calcXInput.value = calcX;
+      updateCalculator();
+      renderHistogramSection();
+    });
 
     // Top Lambda Slider (0 to 12)
     lambdaSlider.addEventListener('input', (e) => {
@@ -615,12 +702,28 @@
       renderComparisonSection();
     });
 
+    // --- Calculator Function ---
+    function updateCalculator() {
+      calcXVal.textContent = calcX;
+      const prob = poissonPmf(lambdaHist, calcX);
+      if (prob === 0) {
+        calcResultNumber.textContent = '0.0000';
+      } else if (prob < 0.0001) {
+        calcResultNumber.textContent = prob.toExponential(3);
+      } else {
+        calcResultNumber.textContent = prob.toFixed(4);
+      }
+    }
+
     // --- 1. Render Top Histogram Section ---
     // The axes limits are fixed to the maximum range for lambda=12 where probability is 0.01 or above.
     // For lambda=12, P(X = x) >= 0.01 up to x = 19 (x = 20 is the clean upper limit).
     // X axis: Events (x), fixed 0 to 20 (21 bins).
     // Y axis: Probability, fixed 0 to 0.40.
     function renderHistogramSection() {
+      // Synchronize the PMF calculator
+      updateCalculator();
+
       // Update readouts
       lambdaSliderDisplay.textContent = `\u03BB = ${lambdaHist.toFixed(2)}`;
       histLambdaReadout.textContent = `\u03BB = ${lambdaHist.toFixed(2)}`;
@@ -697,6 +800,7 @@
         const xCenter = padLeft + (x - xMin + 0.5) * slotW;
         const xPos = xCenter - barW / 2;
         const yPos = padTop + plotH - barH;
+        const isSelected = (x === calcX);
 
         if (barH > 0.5) {
           const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
@@ -705,9 +809,9 @@
           rect.setAttribute('width', barW.toFixed(1));
           rect.setAttribute('height', barH.toFixed(1));
           rect.setAttribute('rx', '3');
-          rect.setAttribute('fill', '#2563eb');
-          rect.setAttribute('stroke', '#1d4ed8');
-          rect.setAttribute('stroke-width', '1');
+          rect.setAttribute('fill', isSelected ? '#1d4ed8' : '#2563eb');
+          rect.setAttribute('stroke', isSelected ? '#0f172a' : '#1d4ed8');
+          rect.setAttribute('stroke-width', isSelected ? '2' : '1');
 
           const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
           title.textContent = `x = ${x}, P(X = ${x}) = ${prob.toFixed(4)}`;
@@ -715,16 +819,16 @@
           svg.appendChild(rect);
         }
 
-        // Value text above bar if prominent
-        if (prob >= 0.03) {
+        // Value text above bar if prominent or selected
+        if (prob >= 0.03 || (isSelected && prob > 0.0001)) {
           const valTxt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
           valTxt.setAttribute('x', xCenter);
           valTxt.setAttribute('y', Math.max(padTop - 6, yPos - 5));
           valTxt.setAttribute('text-anchor', 'middle');
-          valTxt.setAttribute('font-size', '10.5');
-          valTxt.setAttribute('font-weight', '600');
+          valTxt.setAttribute('font-size', isSelected ? '11' : '10.5');
+          valTxt.setAttribute('font-weight', isSelected ? '700' : '600');
           valTxt.setAttribute('font-family', 'var(--font-mono)');
-          valTxt.setAttribute('fill', '#1d4ed8');
+          valTxt.setAttribute('fill', isSelected ? '#0f172a' : '#1d4ed8');
           valTxt.textContent = prob.toFixed(prob >= 0.10 ? 2 : 3);
           svg.appendChild(valTxt);
         }
@@ -734,8 +838,9 @@
         xTickTxt.setAttribute('x', xCenter);
         xTickTxt.setAttribute('y', padTop + plotH + 18);
         xTickTxt.setAttribute('text-anchor', 'middle');
-        xTickTxt.setAttribute('font-size', '11');
-        xTickTxt.setAttribute('fill', '#64748b');
+        xTickTxt.setAttribute('font-size', isSelected ? '12' : '11');
+        xTickTxt.setAttribute('font-weight', isSelected ? '700' : '400');
+        xTickTxt.setAttribute('fill', isSelected ? '#1d4ed8' : '#64748b');
         xTickTxt.setAttribute('font-family', 'var(--font-mono)');
         xTickTxt.textContent = x;
         svg.appendChild(xTickTxt);
