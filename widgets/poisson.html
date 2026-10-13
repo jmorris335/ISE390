@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Poisson Distribution</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --border-subtle: #f1f5f9;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-light: #dbeafe;
+      --binom-color: #d97706;
+      --binom-light: #fef3c7;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      padding: 40px 20px 80px;
+      display: flex;
+      justify-content: center;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 880px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    /* Navigation Back Link */
+    .nav-bar {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      margin-bottom: -12px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+
+    .back-link:hover {
+      color: var(--text);
+    }
+
+    /* Header & Description */
+    header {
+      margin-bottom: 2px;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 600;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+
+    .description {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    .section-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #0f172a;
+      letter-spacing: -0.01em;
+      margin-bottom: 8px;
+    }
+
+    /* Row 1: Large Histogram Panel */
+    .histogram-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .plot-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    .plot-subtext {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-weight: 500;
+    }
+
+    svg.chart-svg {
+      width: 100%;
+      height: auto;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #fafbfc;
+      display: block;
+    }
+
+    /* Equation Block Below Histogram */
+    .equation-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 10px 14px;
+      background: #fafbfc;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.86rem;
+    }
+
+    .equation-row {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .equation-label {
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .equation-math {
+      font-family: var(--font-mono);
+      color: #0f172a;
+      font-size: 0.9rem;
+    }
+
+    .equation-math sup {
+      font-size: 0.72rem;
+    }
+
+    .equation-metrics {
+      display: flex;
+      gap: 18px;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    .equation-metrics span strong {
+      color: #0f172a;
+    }
+
+    /* Row 2: Large Lambda Slider */
+    .slider-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .slider-input {
+      flex: 1;
+      height: 7px;
+      border-radius: 4px;
+      background: #e2e8f0;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .slider-input::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+      transition: transform 0.1s, background-color 0.15s;
+    }
+
+    .slider-input::-webkit-slider-thumb:hover {
+      transform: scale(1.12);
+      background: var(--primary-dark);
+    }
+
+    .slider-input::-moz-range-thumb {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .num-input {
+      width: 84px;
+      padding: 5px 8px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      color: #0f172a;
+      background: #ffffff;
+      text-align: right;
+    }
+
+    .num-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px var(--primary-light);
+    }
+
+    /* Row 3: Comparison Section */
+    .comparison-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 24px;
+      align-items: flex-start;
+    }
+
+    @media (max-width: 760px) {
+      .comparison-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .comparison-plot-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .comparison-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .control-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .control-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    .control-subtext {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-weight: 500;
+    }
+
+    .stats-card {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #fafbfc;
+      font-size: 0.82rem;
+    }
+
+    .stats-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 4px;
+    }
+
+    .stats-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .stats-label {
+      color: var(--text-muted);
+    }
+
+    .stats-val {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    .legend-box {
+      display: flex;
+      gap: 16px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      align-items: center;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-line {
+      width: 18px;
+      height: 3px;
+      border-radius: 1.5px;
+    }
+
+    .line-poisson {
+      background-color: var(--primary);
+    }
+
+    .line-binom {
+      background-color: var(--binom-color);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <!-- Navigation Back Link -->
+    <div class="nav-bar">
+      <a href="../index.html" class="back-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        Course Index
+      </a>
+    </div>
+
+    <!-- Header & Description -->
+    <header>
+      <h1>Poisson Distribution</h1>
+      <p class="description">
+        Distribution of the number of events in an interval, and its approximation by the Binomial when trials n are large and probability p is small.
+      </p>
+    </header>
+
+    <!-- 1. Large Histogram of the Poisson Distribution -->
+    <section class="histogram-section">
+      <div class="plot-header">
+        <span>Probability of observing x events</span>
+        <span class="plot-subtext" id="histLambdaReadout">&lambda; = 4.00</span>
+      </div>
+
+      <!-- Histogram SVG: Fixed limits for lambda=12 where P >= 0.01 (x from 0 to 20, y from 0 to 0.40) -->
+      <svg id="poissonHistSvg" class="chart-svg" viewBox="0 0 840 320"></svg>
+
+      <!-- Equation for Poisson PMF -->
+      <div class="equation-container">
+        <div class="equation-row">
+          <span class="equation-label">PMF:</span>
+          <span class="equation-math">P(X = x) = (&lambda;<sup>x</sup> e<sup>&minus;&lambda;</sup>) / x!</span>
+          <span class="equation-math" style="color: var(--text-muted);">&nbsp;(x = 0, 1, 2, &hellip;)</span>
+        </div>
+        <div class="equation-metrics">
+          <span>Mean: <strong id="eqMean">4.00</strong></span>
+          <span>Variance: <strong id="eqVar">4.00</strong></span>
+          <span>Std Dev: <strong id="eqStd">2.00</strong></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Large Slider for Lambda (0 to 12) -->
+    <section class="slider-section">
+      <div class="plot-header">
+        <span class="section-title" style="margin-bottom: 0;">Rate Parameter (&lambda;)</span>
+        <span class="plot-subtext" id="lambdaSliderDisplay">&lambda; = 4.00</span>
+      </div>
+      <div class="slider-row">
+        <input type="range" id="lambdaSlider" class="slider-input" min="0" max="12" step="0.1" value="4.0">
+        <input type="number" id="lambdaInput" class="num-input" min="0" max="12" step="0.1" value="4.00">
+      </div>
+    </section>
+
+    <!-- 3. Comparison of PMFs: Binomial and Poisson Lines -->
+    <section class="comparison-section">
+      <div class="plot-header">
+        <span class="section-title" style="margin-bottom: 0;">Distribution Comparison</span>
+        <div class="legend-box">
+          <span class="legend-item">
+            <span class="legend-line line-poisson"></span> Poisson (&lambda; = np)
+          </span>
+          <span class="legend-item">
+            <span class="legend-line line-binom"></span> Binomial (n, p)
+          </span>
+        </div>
+      </div>
+
+      <div class="comparison-grid">
+        <!-- Left: Line Plot comparing PMFs -->
+        <div class="comparison-plot-panel">
+          <svg id="comparisonSvg" class="chart-svg" viewBox="0 0 540 300"></svg>
+        </div>
+
+        <!-- Right: Sliders for n and p -->
+        <div class="comparison-controls">
+          <!-- Slider for n: Number of Trials (1 to 10,000) -->
+          <div class="control-item">
+            <div class="control-header">
+              <span>Number of Trials (n)</span>
+              <span class="control-subtext" id="nValDisplay">n = 100</span>
+            </div>
+            <div class="slider-row">
+              <input type="range" id="nSlider" class="slider-input" min="1" max="10000" step="1" value="100">
+              <input type="number" id="nInput" class="num-input" min="1" max="10000" step="1" value="100">
+            </div>
+          </div>
+
+          <!-- Slider for p: Success Probability (0 to 1) -->
+          <div class="control-item">
+            <div class="control-header">
+              <span>Success Probability (p)</span>
+              <span class="control-subtext" id="pValDisplay">p = 0.050</span>
+            </div>
+            <div class="slider-row">
+              <input type="range" id="pSlider" class="slider-input" min="0" max="1" step="0.005" value="0.05">
+              <input type="number" id="pInput" class="num-input" min="0" max="1" step="0.01" value="0.050">
+            </div>
+          </div>
+
+          <!-- Stats / Comparison Card -->
+          <div class="stats-card">
+            <div class="stats-row">
+              <span class="stats-label">Calculated &lambda; (n &times; p)</span>
+              <span class="stats-val" id="dispCalcLambda">5.00</span>
+            </div>
+            <div class="stats-row">
+              <span class="stats-label">Binomial Var (np(1&minus;p))</span>
+              <span class="stats-val" id="dispBinomVar">4.750</span>
+            </div>
+            <div class="stats-row">
+              <span class="stats-label">Poisson Var (&lambda;)</span>
+              <span class="stats-val" id="dispPoisVar">5.000</span>
+            </div>
+            <div class="stats-row">
+              <span class="stats-label">Max PMF Difference</span>
+              <span class="stats-val" id="dispMaxDiff">0.012</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    // --- State ---
+    let lambdaHist = 4.0; // Slider 1: 0 to 12 for the top histogram
+    let nComp = 100;      // Slider 2: 1 to 10,000 for comparison
+    let pComp = 0.05;     // Slider 3: 0 to 1 for comparison
+
+    // Cache ln(k!) up to 1000 for high performance
+    const LN_FACT_CACHE = new Float64Array(1001);
+    LN_FACT_CACHE[0] = 0;
+    for (let i = 1; i <= 1000; i++) {
+      LN_FACT_CACHE[i] = LN_FACT_CACHE[i - 1] + Math.log(i);
+    }
+
+    // High-precision Ramanujan/Stirling approximation for k > 1000
+    function lnFact(k) {
+      if (k <= 0) return 0;
+      if (k <= 1000) return LN_FACT_CACHE[k];
+      const kd = k;
+      return kd * Math.log(kd) - kd + 0.5 * Math.log(2 * Math.PI * kd) + 1 / (12 * kd) - 1 / (360 * kd * kd * kd);
+    }
+
+    // Numerically stable Poisson PMF
+    function poissonPmf(lam, k) {
+      if (k < 0) return 0;
+      if (lam === 0) return k === 0 ? 1 : 0;
+      const lnProb = k * Math.log(lam) - lam - lnFact(k);
+      if (lnProb < -700) return 0;
+      return Math.exp(lnProb);
+    }
+
+    // Numerically stable Binomial PMF
+    function binomialPmf(nVal, pVal, k) {
+      if (k < 0 || k > nVal) return 0;
+      if (pVal === 0) return k === 0 ? 1 : 0;
+      if (pVal === 1) return k === nVal ? 1 : 0;
+      const lnComb = lnFact(nVal) - lnFact(k) - lnFact(nVal - k);
+      const lnProb = lnComb + k * Math.log(pVal) + (nVal - k) * Math.log(1 - pVal);
+      if (lnProb < -700) return 0;
+      return Math.exp(lnProb);
+    }
+
+    // --- DOM Elements ---
+    const lambdaSlider = document.getElementById('lambdaSlider');
+    const lambdaInput = document.getElementById('lambdaInput');
+    const lambdaSliderDisplay = document.getElementById('lambdaSliderDisplay');
+    const histLambdaReadout = document.getElementById('histLambdaReadout');
+    const poissonHistSvg = document.getElementById('poissonHistSvg');
+    const eqMean = document.getElementById('eqMean');
+    const eqVar = document.getElementById('eqVar');
+    const eqStd = document.getElementById('eqStd');
+
+    const nSlider = document.getElementById('nSlider');
+    const nInput = document.getElementById('nInput');
+    const nValDisplay = document.getElementById('nValDisplay');
+
+    const pSlider = document.getElementById('pSlider');
+    const pInput = document.getElementById('pInput');
+    const pValDisplay = document.getElementById('pValDisplay');
+
+    const dispCalcLambda = document.getElementById('dispCalcLambda');
+    const dispBinomVar = document.getElementById('dispBinomVar');
+    const dispPoisVar = document.getElementById('dispPoisVar');
+    const dispMaxDiff = document.getElementById('dispMaxDiff');
+    const comparisonSvg = document.getElementById('comparisonSvg');
+
+    // --- Event Listeners ---
+
+    // Top Lambda Slider (0 to 12)
+    lambdaSlider.addEventListener('input', (e) => {
+      lambdaHist = parseFloat(e.target.value);
+      lambdaInput.value = lambdaHist.toFixed(2);
+      renderHistogramSection();
+    });
+
+    lambdaInput.addEventListener('change', (e) => {
+      let val = parseFloat(e.target.value);
+      if (isNaN(val)) val = 0;
+      val = Math.max(0, Math.min(12, val));
+      lambdaHist = val;
+      lambdaSlider.value = lambdaHist;
+      renderHistogramSection();
+    });
+
+    // Comparison Slider n (1 to 10,000)
+    nSlider.addEventListener('input', (e) => {
+      nComp = parseInt(e.target.value, 10);
+      nInput.value = nComp;
+      renderComparisonSection();
+    });
+
+    nInput.addEventListener('change', (e) => {
+      let val = parseInt(e.target.value, 10);
+      if (isNaN(val)) val = 1;
+      val = Math.max(1, Math.min(10000, val));
+      nComp = val;
+      nSlider.value = nComp;
+      renderComparisonSection();
+    });
+
+    // Comparison Slider p (0 to 1)
+    pSlider.addEventListener('input', (e) => {
+      pComp = parseFloat(e.target.value);
+      pInput.value = pComp.toFixed(3);
+      renderComparisonSection();
+    });
+
+    pInput.addEventListener('change', (e) => {
+      let val = parseFloat(e.target.value);
+      if (isNaN(val)) val = 0;
+      val = Math.max(0, Math.min(1, val));
+      pComp = val;
+      pSlider.value = pComp;
+      renderComparisonSection();
+    });
+
+    // --- 1. Render Top Histogram Section ---
+    // The axes limits are fixed to the maximum range for lambda=12 where probability is 0.01 or above.
+    // For lambda=12, P(X = x) >= 0.01 up to x = 19 (x = 20 is the clean upper limit).
+    // X axis: Events (x), fixed 0 to 20 (21 bins).
+    // Y axis: Probability, fixed 0 to 0.40.
+    function renderHistogramSection() {
+      // Update readouts
+      lambdaSliderDisplay.textContent = `\u03BB = ${lambdaHist.toFixed(2)}`;
+      histLambdaReadout.textContent = `\u03BB = ${lambdaHist.toFixed(2)}`;
+      eqMean.textContent = lambdaHist.toFixed(2);
+      eqVar.textContent = lambdaHist.toFixed(2);
+      eqStd.textContent = Math.sqrt(lambdaHist).toFixed(2);
+
+      const svg = poissonHistSvg;
+      svg.innerHTML = '';
+
+      const W = 840;
+      const H = 320;
+      const padLeft = 60;
+      const padRight = 30;
+      const padTop = 35;
+      const padBottom = 50;
+
+      const plotW = W - padLeft - padRight;
+      const plotH = H - padTop - padBottom;
+
+      // Fixed limits as requested:
+      // Maximum range for lambda=12 where P >= 0.01 is up to x = 20.
+      const xMin = 0;
+      const xMax = 20;
+      const numBins = xMax - xMin + 1; // 21 bins (0 to 20)
+      const yCeil = 0.40;              // Fixed y-axis ceiling
+
+      // Y-axis Gridlines & Labels
+      const yTicks = [0, 0.10, 0.20, 0.30, 0.40];
+      yTicks.forEach(tick => {
+        const yPos = padTop + (1 - tick / yCeil) * plotH;
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', padLeft);
+        line.setAttribute('y1', yPos);
+        line.setAttribute('x2', W - padRight);
+        line.setAttribute('y2', yPos);
+        line.setAttribute('stroke', tick === 0 ? '#cbd5e1' : '#e2e8f0');
+        line.setAttribute('stroke-width', tick === 0 ? '1.5' : '1');
+        svg.appendChild(line);
+
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        txt.setAttribute('x', padLeft - 10);
+        txt.setAttribute('y', yPos + 4);
+        txt.setAttribute('text-anchor', 'end');
+        txt.setAttribute('font-size', '11');
+        txt.setAttribute('fill', '#64748b');
+        txt.setAttribute('font-family', 'var(--font-mono)');
+        txt.textContent = tick.toFixed(2);
+        svg.appendChild(txt);
+      });
+
+      // Y-Axis Title: "Probability"
+      const yTitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      yTitle.setAttribute('transform', `rotate(-90)`);
+      yTitle.setAttribute('x', -(padTop + plotH / 2));
+      yTitle.setAttribute('y', 18);
+      yTitle.setAttribute('text-anchor', 'middle');
+      yTitle.setAttribute('font-size', '12');
+      yTitle.setAttribute('font-weight', '600');
+      yTitle.setAttribute('fill', '#475569');
+      yTitle.textContent = 'Probability';
+      svg.appendChild(yTitle);
+
+      // Bar geometry
+      const slotW = plotW / numBins;
+      const barGap = Math.max(3, slotW * 0.18);
+      const barW = Math.max(2, slotW - barGap);
+
+      // Draw Bars
+      for (let x = xMin; x <= xMax; x++) {
+        const prob = poissonPmf(lambdaHist, x);
+        const barH = Math.min(plotH, (prob / yCeil) * plotH);
+        const xCenter = padLeft + (x - xMin + 0.5) * slotW;
+        const xPos = xCenter - barW / 2;
+        const yPos = padTop + plotH - barH;
+
+        if (barH > 0.5) {
+          const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          rect.setAttribute('x', xPos.toFixed(1));
+          rect.setAttribute('y', yPos.toFixed(1));
+          rect.setAttribute('width', barW.toFixed(1));
+          rect.setAttribute('height', barH.toFixed(1));
+          rect.setAttribute('rx', '3');
+          rect.setAttribute('fill', '#2563eb');
+          rect.setAttribute('stroke', '#1d4ed8');
+          rect.setAttribute('stroke-width', '1');
+
+          const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+          title.textContent = `x = ${x}, P(X = ${x}) = ${prob.toFixed(4)}`;
+          rect.appendChild(title);
+          svg.appendChild(rect);
+        }
+
+        // Value text above bar if prominent
+        if (prob >= 0.03) {
+          const valTxt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          valTxt.setAttribute('x', xCenter);
+          valTxt.setAttribute('y', Math.max(padTop - 6, yPos - 5));
+          valTxt.setAttribute('text-anchor', 'middle');
+          valTxt.setAttribute('font-size', '10.5');
+          valTxt.setAttribute('font-weight', '600');
+          valTxt.setAttribute('font-family', 'var(--font-mono)');
+          valTxt.setAttribute('fill', '#1d4ed8');
+          valTxt.textContent = prob.toFixed(prob >= 0.10 ? 2 : 3);
+          svg.appendChild(valTxt);
+        }
+
+        // X-Axis Tick Label (every event x from 0 to 20)
+        const xTickTxt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        xTickTxt.setAttribute('x', xCenter);
+        xTickTxt.setAttribute('y', padTop + plotH + 18);
+        xTickTxt.setAttribute('text-anchor', 'middle');
+        xTickTxt.setAttribute('font-size', '11');
+        xTickTxt.setAttribute('fill', '#64748b');
+        xTickTxt.setAttribute('font-family', 'var(--font-mono)');
+        xTickTxt.textContent = x;
+        svg.appendChild(xTickTxt);
+      }
+
+      // Mean Line (μ = λ)
+      if (lambdaHist >= xMin && lambdaHist <= xMax) {
+        const xMean = padLeft + (lambdaHist + 0.5) * slotW;
+        const yAxis = padTop + plotH;
+
+        const meanLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        meanLine.setAttribute('x1', xMean);
+        meanLine.setAttribute('y1', padTop);
+        meanLine.setAttribute('x2', xMean);
+        meanLine.setAttribute('y2', yAxis);
+        meanLine.setAttribute('stroke', '#d97706');
+        meanLine.setAttribute('stroke-width', '1.5');
+        meanLine.setAttribute('stroke-dasharray', '3 2');
+        svg.appendChild(meanLine);
+
+        const meanLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        const safeX = Math.max(padLeft + 25, Math.min(W - padRight - 25, xMean));
+        meanLabel.setAttribute('x', safeX);
+        meanLabel.setAttribute('y', padTop - 12);
+        meanLabel.setAttribute('text-anchor', 'middle');
+        meanLabel.setAttribute('font-size', '11');
+        meanLabel.setAttribute('font-weight', '600');
+        meanLabel.setAttribute('font-family', 'var(--font-mono)');
+        meanLabel.setAttribute('fill', '#d97706');
+        meanLabel.textContent = `\u03BC = ${lambdaHist.toFixed(1)}`;
+        svg.appendChild(meanLabel);
+      }
+
+      // X-Axis Title: "Events (x)"
+      const xTitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      xTitle.setAttribute('x', padLeft + plotW / 2);
+      xTitle.setAttribute('y', padTop + plotH + 38);
+      xTitle.setAttribute('text-anchor', 'middle');
+      xTitle.setAttribute('font-size', '12');
+      xTitle.setAttribute('font-weight', '600');
+      xTitle.setAttribute('fill', '#475569');
+      xTitle.textContent = 'Events (x)';
+      svg.appendChild(xTitle);
+    }
+
+    // --- 3. Render Comparison Section (Lines on XY Plot) ---
+    // The PMFs are shown as lines on the same xy plot.
+    // The y axis is probability, the x axis is number of events.
+    function renderComparisonSection() {
+      // Update readouts
+      nValDisplay.textContent = `n = ${nComp.toLocaleString()}`;
+      pValDisplay.textContent = `p = ${pComp.toFixed(3)}`;
+
+      const lambdaComp = nComp * pComp;
+      dispCalcLambda.textContent = lambdaComp.toFixed(2);
+
+      const binomVar = nComp * pComp * (1 - pComp);
+      dispBinomVar.textContent = binomVar.toFixed(3);
+      dispPoisVar.textContent = lambdaComp.toFixed(3);
+
+      const svg = comparisonSvg;
+      svg.innerHTML = '';
+
+      const W = 540;
+      const H = 300;
+      const padLeft = 60;
+      const padRight = 24;
+      const padTop = 32;
+      const padBottom = 48;
+
+      const plotW = W - padLeft - padRight;
+      const plotH = H - padTop - padBottom;
+
+      // Determine the active window of events [xMin, xMax] where probability > 0.001
+      const mu = lambdaComp;
+      const std = Math.sqrt(Math.max(1, lambdaComp));
+
+      let xMin = Math.max(0, Math.floor(mu - 3.8 * std));
+      let xMax = Math.min(nComp, Math.ceil(mu + 3.8 * std));
+
+      // Expand to ensure all probability >= 0.001 is captured
+      while (xMin > 0 && Math.max(binomialPmf(nComp, pComp, xMin), poissonPmf(lambdaComp, xMin)) >= 0.001) {
+        xMin--;
+      }
+      while (xMax < nComp && Math.max(binomialPmf(nComp, pComp, xMax), poissonPmf(lambdaComp, xMax)) >= 0.001) {
+        xMax++;
+      }
+
+      // Ensure minimum width of at least 8 events
+      if (xMax - xMin < 8) {
+        xMax = Math.min(nComp, xMin + 8);
+        if (xMax - xMin < 8) {
+          xMin = Math.max(0, xMax - 8);
+        }
+      }
+
+      const numPts = xMax - xMin + 1;
+
+      // Compute PMFs and maximum probability for y-axis ceiling
+      const xVals = [];
+      const binomVals = [];
+      const poisVals = [];
+      let maxProb = 0;
+      let maxDiff = 0;
+
+      for (let x = xMin; x <= xMax; x++) {
+        const pBin = binomialPmf(nComp, pComp, x);
+        const pPois = poissonPmf(lambdaComp, x);
+        const diff = Math.abs(pBin - pPois);
+        if (diff > maxDiff) maxDiff = diff;
+
+        xVals.push(x);
+        binomVals.push(pBin);
+        poisVals.push(pPois);
+
+        if (pBin > maxProb) maxProb = pBin;
+        if (pPois > maxProb) maxProb = pPois;
+      }
+
+      dispMaxDiff.textContent = maxDiff.toFixed(4);
+
+      // Dynamic Y-axis scaling to fit the peak probability
+      let yCeil = 1.0;
+      let yStep = 0.2;
+      let decimals = 2;
+      let yTicks = [0, 0.2, 0.4, 0.6, 0.8, 1.0];
+
+      if (maxProb < 0.85) {
+        const rawTarget = Math.max(0.001, maxProb * 1.18);
+        const rawStep = rawTarget / 4;
+        const mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
+        const residual = rawStep / mag;
+
+        if (residual <= 1.4) yStep = 1 * mag;
+        else if (residual <= 3.2) yStep = 2 * mag;
+        else if (residual <= 7.0) yStep = 5 * mag;
+        else yStep = 10 * mag;
+
+        yCeil = parseFloat((Math.ceil(rawTarget / yStep) * yStep).toFixed(6));
+
+        if (yStep < 0.001) decimals = 4;
+        else if (yStep < 0.01) decimals = 3;
+        else decimals = 2;
+
+        yTicks = [];
+        for (let t = 0; t <= yCeil + yStep * 0.01; t += yStep) {
+          yTicks.push(parseFloat(t.toFixed(decimals)));
+        }
+      }
+
+      const toX = (x) => padLeft + ((x - xMin) / (xMax - xMin)) * plotW;
+      const toY = (p) => padTop + (1 - p / yCeil) * plotH;
+
+      // Draw Horizontal Gridlines & Y-axis labels
+      yTicks.forEach(tick => {
+        const yPos = toY(tick);
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', padLeft);
+        line.setAttribute('y1', yPos.toFixed(1));
+        line.setAttribute('x2', W - padRight);
+        line.setAttribute('y2', yPos.toFixed(1));
+        line.setAttribute('stroke', tick === 0 ? '#cbd5e1' : '#e2e8f0');
+        line.setAttribute('stroke-width', tick === 0 ? '1.5' : '1');
+        svg.appendChild(line);
+
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        txt.setAttribute('x', padLeft - 8);
+        txt.setAttribute('y', (yPos + 3.5).toFixed(1));
+        txt.setAttribute('text-anchor', 'end');
+        txt.setAttribute('font-size', '10');
+        txt.setAttribute('fill', '#64748b');
+        txt.setAttribute('font-family', 'var(--font-mono)');
+        txt.textContent = tick.toFixed(decimals);
+        svg.appendChild(txt);
+      });
+
+      // Y-Axis Title
+      const yTitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      yTitle.setAttribute('transform', `rotate(-90)`);
+      yTitle.setAttribute('x', -(padTop + plotH / 2));
+      yTitle.setAttribute('y', 15);
+      yTitle.setAttribute('text-anchor', 'middle');
+      yTitle.setAttribute('font-size', '11');
+      yTitle.setAttribute('font-weight', '600');
+      yTitle.setAttribute('fill', '#475569');
+      yTitle.textContent = 'Probability';
+      svg.appendChild(yTitle);
+
+      // Adaptive X-axis ticks (decreases frequency as events grow larger so labels never collide)
+      const span = xMax - xMin;
+      const maxVal = Math.max(Math.abs(xMin), Math.abs(xMax));
+
+      // As events grow larger (more digits), decrease target tick count to keep ample spacing
+      let targetCount = 7;
+      if (maxVal >= 5000) targetCount = 5;
+      else if (maxVal >= 1000) targetCount = 6;
+      else if (maxVal >= 100) targetCount = 7;
+      else targetCount = 8;
+
+      const rawStep = Math.max(1, span / targetCount);
+      const mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
+      const residual = rawStep / mag;
+
+      let xStep = 1;
+      if (residual <= 1.4) xStep = 1 * mag;
+      else if (residual <= 3.5) xStep = 2 * mag;
+      else if (residual <= 7.5) xStep = 5 * mag;
+      else xStep = 10 * mag;
+      xStep = Math.max(1, Math.round(xStep));
+
+      const firstTick = Math.ceil(xMin / xStep) * xStep;
+
+      for (let x = firstTick; x <= xMax; x += xStep) {
+        const xPos = toX(x);
+
+        // Small tick notch
+        const tickMark = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        tickMark.setAttribute('x1', xPos.toFixed(1));
+        tickMark.setAttribute('y1', (padTop + plotH).toFixed(1));
+        tickMark.setAttribute('x2', xPos.toFixed(1));
+        tickMark.setAttribute('y2', (padTop + plotH + 4).toFixed(1));
+        tickMark.setAttribute('stroke', '#cbd5e1');
+        tickMark.setAttribute('stroke-width', '1.2');
+        svg.appendChild(tickMark);
+
+        // Tick label
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        txt.setAttribute('x', xPos.toFixed(1));
+        txt.setAttribute('y', padTop + plotH + 16);
+        txt.setAttribute('text-anchor', 'middle');
+        txt.setAttribute('font-size', '10');
+        txt.setAttribute('fill', '#64748b');
+        txt.setAttribute('font-family', 'var(--font-mono)');
+        txt.textContent = x;
+        svg.appendChild(txt);
+      }
+
+      // X-Axis Title
+      const xTitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      xTitle.setAttribute('x', padLeft + plotW / 2);
+      xTitle.setAttribute('y', padTop + plotH + 34);
+      xTitle.setAttribute('text-anchor', 'middle');
+      xTitle.setAttribute('font-size', '11');
+      xTitle.setAttribute('font-weight', '600');
+      xTitle.setAttribute('fill', '#475569');
+      xTitle.textContent = 'Number of Events';
+      svg.appendChild(xTitle);
+
+      // 1. Draw Binomial Line (Amber/Orange)
+      let binomPathD = '';
+      for (let i = 0; i < numPts; i++) {
+        const x = xVals[i];
+        const prob = binomVals[i];
+        const px = toX(x);
+        const py = toY(prob);
+        binomPathD += (i === 0 ? `M ${px.toFixed(2)} ${py.toFixed(2)}` : ` L ${px.toFixed(2)} ${py.toFixed(2)}`);
+      }
+
+      const binomPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      binomPath.setAttribute('d', binomPathD);
+      binomPath.setAttribute('fill', 'none');
+      binomPath.setAttribute('stroke', '#d97706');
+      binomPath.setAttribute('stroke-width', '2.2');
+      svg.appendChild(binomPath);
+
+      // 2. Draw Poisson Line (Blue)
+      let poisPathD = '';
+      for (let i = 0; i < numPts; i++) {
+        const x = xVals[i];
+        const prob = poisVals[i];
+        const px = toX(x);
+        const py = toY(prob);
+        poisPathD += (i === 0 ? `M ${px.toFixed(2)} ${py.toFixed(2)}` : ` L ${px.toFixed(2)} ${py.toFixed(2)}`);
+      }
+
+      const poisPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      poisPath.setAttribute('d', poisPathD);
+      poisPath.setAttribute('fill', 'none');
+      poisPath.setAttribute('stroke', '#2563eb');
+      poisPath.setAttribute('stroke-width', '2.2');
+      svg.appendChild(poisPath);
+
+      // Draw point markers if reasonable number of points
+      if (numPts <= 35) {
+        // Binomial points
+        for (let i = 0; i < numPts; i++) {
+          const x = xVals[i];
+          const prob = binomVals[i];
+          const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          dot.setAttribute('cx', toX(x).toFixed(1));
+          dot.setAttribute('cy', toY(prob).toFixed(1));
+          dot.setAttribute('r', '3.5');
+          dot.setAttribute('fill', '#d97706');
+          dot.setAttribute('stroke', '#ffffff');
+          dot.setAttribute('stroke-width', '1.5');
+          const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+          title.textContent = `x = ${x}, Binomial P = ${prob.toFixed(4)}`;
+          dot.appendChild(title);
+          svg.appendChild(dot);
+        }
+
+        // Poisson points
+        for (let i = 0; i < numPts; i++) {
+          const x = xVals[i];
+          const prob = poisVals[i];
+          const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          dot.setAttribute('cx', toX(x).toFixed(1));
+          dot.setAttribute('cy', toY(prob).toFixed(1));
+          dot.setAttribute('r', '3.5');
+          dot.setAttribute('fill', '#2563eb');
+          dot.setAttribute('stroke', '#ffffff');
+          dot.setAttribute('stroke-width', '1.5');
+          const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+          title.textContent = `x = ${x}, Poisson P = ${prob.toFixed(4)}`;
+          dot.appendChild(title);
+          svg.appendChild(dot);
+        }
+      }
+    }
+
+    // Initial Render
+    renderHistogramSection();
+    renderComparisonSection();
+  </script>
+</body>
+
+</html>
