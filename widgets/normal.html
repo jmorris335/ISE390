@@ -1,0 +1,1495 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Normal Distribution</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --border-subtle: #f1f5f9;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-light: #dbeafe;
+      --green: #059669;
+      --green-light: #d1fae5;
+      --purple: #7c3aed;
+      --purple-light: #ede9fe;
+      --dark: #0f172a;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      padding: 36px 20px 80px;
+      display: flex;
+      justify-content: center;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    /* Navigation Back Link */
+    .nav-bar {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      margin-bottom: -12px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+
+    .back-link:hover {
+      color: var(--text);
+    }
+
+    /* Header */
+    header {
+      margin-bottom: -8px;
+    }
+
+    h1 {
+      font-size: 1.65rem;
+      font-weight: 600;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+    }
+
+    .section-title {
+      font-size: 1.08rem;
+      font-weight: 600;
+      color: #0f172a;
+      letter-spacing: -0.01em;
+      margin-bottom: 12px;
+    }
+
+    /* Row 1 & 3: Top Plot & Side Panel Layout */
+    .top-panel-grid {
+      display: grid;
+      grid-template-columns: 1fr 260px;
+      gap: 20px;
+      align-items: start;
+    }
+
+    @media (max-width: 768px) {
+      .top-panel-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .plot-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    svg.chart-svg {
+      width: 100%;
+      height: auto;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #fafbfc;
+      display: block;
+    }
+
+    /* Equation Block Below Plot */
+    .equation-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 10px 14px;
+      background: #fafbfc;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.88rem;
+    }
+
+    .equation-math {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      color: #0f172a;
+    }
+
+    .equation-math .frac {
+      display: inline-flex;
+      flex-direction: column;
+      vertical-align: middle;
+      text-align: center;
+      font-size: 0.82rem;
+      line-height: 1.1;
+    }
+
+    .equation-math .frac .num {
+      border-bottom: 1px solid #475569;
+      padding-bottom: 1px;
+    }
+
+    .equation-math .frac .den {
+      padding-top: 1px;
+    }
+
+    .equation-stats {
+      display: flex;
+      gap: 16px;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    .equation-stats strong {
+      color: #0f172a;
+    }
+
+    /* Side Panel for x, z, CDF */
+    .side-calculator {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding: 16px;
+      background: #fafbfc;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+
+    .calc-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .calc-label {
+      font-size: 0.84rem;
+      font-weight: 500;
+      color: var(--text);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .calc-formula {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .calc-input-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .calc-input {
+      width: 100%;
+      padding: 7px 10px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      color: #0f172a;
+      background: #ffffff;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .calc-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px var(--primary-light);
+    }
+
+    .calc-stat-box {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .calc-stat-title {
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .calc-stat-val {
+      font-family: var(--font-mono);
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .calc-stat-desc {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    /* Sliders Section */
+    .sliders-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 640px) {
+      .sliders-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .slider-item {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .slider-label {
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .slider-subtext {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .slider-input {
+      flex: 1;
+      height: 7px;
+      border-radius: 4px;
+      background: #e2e8f0;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .slider-input::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+      transition: transform 0.1s, background-color 0.15s;
+    }
+
+    .slider-input::-webkit-slider-thumb:hover {
+      transform: scale(1.12);
+      background: var(--primary-dark);
+    }
+
+    .slider-input::-moz-range-thumb {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .num-input {
+      width: 80px;
+      padding: 6px 8px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      color: #0f172a;
+      background: #ffffff;
+      text-align: right;
+    }
+
+    .num-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px var(--primary-light);
+    }
+
+    /* Module 4: Combinations of Normal Random Variables */
+    .module-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+    .module-top-grid {
+      display: grid;
+      grid-template-columns: 1fr 240px;
+      gap: 20px;
+      align-items: start;
+    }
+
+    @media (max-width: 768px) {
+      .module-top-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      font-size: 0.84rem;
+      font-family: var(--font-mono);
+      padding: 6px 0;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-line {
+      width: 18px;
+      height: 3px;
+      border-radius: 2px;
+      display: inline-block;
+    }
+
+    .legend-hist-box {
+      width: 14px;
+      height: 12px;
+      background: rgba(15, 23, 42, 0.25);
+      border: 1px solid rgba(15, 23, 42, 0.5);
+      border-radius: 2px;
+      display: inline-block;
+    }
+
+    /* Sampling Action Panel */
+    .sampling-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 16px;
+      background: #fafbfc;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+
+    .btn {
+      font-family: var(--font-sans);
+      font-size: 0.88rem;
+      font-weight: 500;
+      padding: 9px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #ffffff;
+      border: 1px solid var(--primary-dark);
+      box-shadow: 0 1px 3px rgba(37, 99, 235, 0.2);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-secondary {
+      background: #ffffff;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .sample-stats {
+      margin-top: 4px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .sample-stats-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .sample-stats-row strong {
+      color: #0f172a;
+    }
+
+    /* 3 Variables Sliders Grid */
+    .tri-sliders-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 4px;
+    }
+
+    @media (max-width: 768px) {
+      .tri-sliders-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .var-card {
+      padding: 12px 14px;
+      background: #fafbfc;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .var-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.88rem;
+      font-weight: 600;
+    }
+
+    .var-tag {
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .var-tag-x1 {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .var-tag-x2 {
+      background: var(--green-light);
+      color: var(--green);
+    }
+
+    .var-tag-x3 {
+      background: var(--purple-light);
+      color: var(--purple);
+    }
+
+    .var-slider-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .var-slider-label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+    }
+
+    .var-slider-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .var-num-input {
+      width: 60px;
+      padding: 4px 6px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: #0f172a;
+      background: #ffffff;
+      text-align: right;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <!-- Navigation Back Link -->
+    <div class="nav-bar">
+      <a href="../index.html" class="back-link">&larr; Back to Visualizations</a>
+    </div>
+
+    <!-- Header -->
+    <header>
+      <h1>Normal Distribution</h1>
+    </header>
+
+    <!-- Part 1 & 3: Normal Plot & Side Panel -->
+    <div>
+      <h2 class="section-title">Probability Density & Cumulative Area</h2>
+      <div class="top-panel-grid">
+        <!-- Left: Normal PDF Plot -->
+        <div class="plot-wrapper">
+          <svg id="normalSvg" class="chart-svg" viewBox="0 0 620 320"></svg>
+          
+          <!-- Equation for PDF below plot -->
+          <div class="equation-bar">
+            <div class="equation-math">
+              <span>f(x) =</span>
+              <span class="frac">
+                <span class="num">1</span>
+                <span class="den">&sigma;&radic;(2&pi;)</span>
+              </span>
+              <span>exp(&minus;</span>
+              <span class="frac">
+                <span class="num">(x &minus; &mu;)<sup>2</sup></span>
+                <span class="den">2&sigma;<sup>2</sup></span>
+              </span>
+              <span>)</span>
+            </div>
+            <div class="equation-stats">
+              <span>&sigma; = <strong id="dispSigmaVal">1.000</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Input x, z formula, CDF value -->
+        <div class="side-calculator">
+          <div class="calc-row">
+            <label class="calc-label" for="xInput">
+              <span>Input value (x)</span>
+            </label>
+            <div class="calc-input-row">
+              <input type="number" id="xInput" class="calc-input" step="any" value="0.0">
+            </div>
+          </div>
+
+          <div class="calc-stat-box">
+            <div class="calc-stat-title">Standardized Score</div>
+            <div class="calc-stat-desc">z = (x &minus; &mu;) / &sigma;</div>
+            <div class="calc-stat-val" id="dispZVal">0.000</div>
+          </div>
+
+          <div class="calc-stat-box">
+            <div class="calc-stat-title">Cumulative Probability</div>
+            <div class="calc-stat-desc">&Phi;(z) = P(X &le; x)</div>
+            <div class="calc-stat-val" id="dispCdfVal">0.5000</div>
+          </div>
+
+          <div class="calc-stat-box">
+            <div class="calc-stat-title">Upper Tail</div>
+            <div class="calc-stat-desc">P(X &gt; x) = 1 &minus; &Phi;(z)</div>
+            <div class="calc-stat-val" id="dispTailVal" style="color: #64748b;">0.5000</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Part 2: Large Sliders for mu and sigma^2 -->
+    <div>
+      <h2 class="section-title">Distribution Parameters</h2>
+      <div class="sliders-grid">
+        <!-- Slider 1: Mean (mu) from -10 to 10 -->
+        <div class="slider-item">
+          <div class="slider-header">
+            <span class="slider-label">Mean (&mu;)</span>
+            <span class="slider-subtext" id="dispMuVal">&mu; = 0.0</span>
+          </div>
+          <div class="slider-row">
+            <input type="range" id="muSlider" class="slider-input" min="-10" max="10" step="0.1" value="0">
+            <input type="number" id="muInput" class="num-input" min="-10" max="10" step="0.1" value="0.0">
+          </div>
+        </div>
+
+        <!-- Slider 2: Variance (sigma^2) from 0 to 10 -->
+        <div class="slider-item">
+          <div class="slider-header">
+            <span class="slider-label">Variance (&sigma;<sup>2</sup>)</span>
+            <span class="slider-subtext" id="dispSigmaSqVal">&sigma;<sup>2</sup> = 1.00</span>
+          </div>
+          <div class="slider-row">
+            <input type="range" id="sigmaSqSlider" class="slider-input" min="0.05" max="10.0" step="0.05" value="1.0">
+            <input type="number" id="sigmaSqInput" class="num-input" min="0.05" max="10.0" step="0.05" value="1.00">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Part 4: Combinations of Normal Random Variables -->
+    <div class="module-container">
+      <div>
+        <h2 class="section-title">Sums of Normal Random Variables</h2>
+        <div class="legend-row">
+          <span class="legend-item">
+            <span class="legend-line" style="background: var(--primary);"></span> X<sub>1</sub> ~ N(&mu;<sub>1</sub>, &sigma;<sub>1</sub><sup>2</sup>)
+          </span>
+          <span class="legend-item">
+            <span class="legend-line" style="background: var(--green);"></span> X<sub>2</sub> ~ N(&mu;<sub>2</sub>, &sigma;<sub>2</sub><sup>2</sup>)
+          </span>
+          <span class="legend-item">
+            <span class="legend-line" style="background: var(--purple);"></span> X<sub>3</sub> ~ N(&mu;<sub>3</sub>, &sigma;<sub>3</sub><sup>2</sup>)
+          </span>
+          <span class="legend-item">
+            <span class="legend-line" style="background: var(--dark); height: 4px;"></span> Sum Y = &Sigma;X<sub>i</sub>
+          </span>
+          <span class="legend-item">
+            <span class="legend-hist-box"></span> Sample Histogram
+          </span>
+        </div>
+      </div>
+
+      <div class="module-top-grid">
+        <!-- Sum Plot with superimposed histogram -->
+        <div class="plot-wrapper">
+          <svg id="comboSvg" class="chart-svg" viewBox="0 0 620 320"></svg>
+        </div>
+
+        <!-- Sampling Actions Panel -->
+        <div class="sampling-actions">
+          <button id="btnSample1" class="btn btn-primary">
+            Draw 1 Sample
+          </button>
+          <button id="btnSample50" class="btn btn-secondary">
+            Draw 50 Samples
+          </button>
+          <button id="btnClearHist" class="btn btn-secondary">
+            Clear Histogram
+          </button>
+
+          <div class="sample-stats">
+            <div class="sample-stats-row">
+              <span>Samples (N)</span>
+              <strong id="statCount">0</strong>
+            </div>
+            <div class="sample-stats-row">
+              <span>Sample Mean (y&#772;)</span>
+              <strong id="statSampleMean">&mdash;</strong>
+            </div>
+            <div class="sample-stats-row">
+              <span>Theory Mean (&mu;<sub>Y</sub>)</span>
+              <strong id="statTheoryMean">0.00</strong>
+            </div>
+            <div class="sample-stats-row">
+              <span>Sample Var (s<sup>2</sup>)</span>
+              <strong id="statSampleVar">&mdash;</strong>
+            </div>
+            <div class="sample-stats-row">
+              <span>Theory Var (&sigma;<sub>Y</sub><sup>2</sup>)</span>
+              <strong id="statTheoryVar">3.00</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sliders for the 3 individual random variables -->
+      <div class="tri-sliders-grid">
+        <!-- Variable 1 -->
+        <div class="var-card">
+          <div class="var-title-row">
+            <span>Variable 1</span>
+            <span class="var-tag var-tag-x1">X<sub>1</sub></span>
+          </div>
+          <div class="var-slider-group">
+            <div class="var-slider-label">
+              <span>Mean (&mu;<sub>1</sub>)</span>
+              <span id="labelMu1">0.0</span>
+            </div>
+            <div class="var-slider-row">
+              <input type="range" id="sliderMu1" class="slider-input" min="-5" max="5" step="0.1" value="-2.0">
+              <input type="number" id="inputMu1" class="var-num-input" min="-5" max="5" step="0.1" value="-2.0">
+            </div>
+          </div>
+          <div class="var-slider-group">
+            <div class="var-slider-label">
+              <span>Variance (&sigma;<sub>1</sub><sup>2</sup>)</span>
+              <span id="labelVar1">1.0</span>
+            </div>
+            <div class="var-slider-row">
+              <input type="range" id="sliderVar1" class="slider-input" min="0.2" max="4.0" step="0.1" value="1.0">
+              <input type="number" id="inputVar1" class="var-num-input" min="0.2" max="4.0" step="0.1" value="1.0">
+            </div>
+          </div>
+        </div>
+
+        <!-- Variable 2 -->
+        <div class="var-card">
+          <div class="var-title-row">
+            <span>Variable 2</span>
+            <span class="var-tag var-tag-x2">X<sub>2</sub></span>
+          </div>
+          <div class="var-slider-group">
+            <div class="var-slider-label">
+              <span>Mean (&mu;<sub>2</sub>)</span>
+              <span id="labelMu2">0.0</span>
+            </div>
+            <div class="var-slider-row">
+              <input type="range" id="sliderMu2" class="slider-input" min="-5" max="5" step="0.1" value="0.0">
+              <input type="number" id="inputMu2" class="var-num-input" min="-5" max="5" step="0.1" value="0.0">
+            </div>
+          </div>
+          <div class="var-slider-group">
+            <div class="var-slider-label">
+              <span>Variance (&sigma;<sub>2</sub><sup>2</sup>)</span>
+              <span id="labelVar2">1.0</span>
+            </div>
+            <div class="var-slider-row">
+              <input type="range" id="sliderVar2" class="slider-input" min="0.2" max="4.0" step="0.1" value="1.0">
+              <input type="number" id="inputVar2" class="var-num-input" min="0.2" max="4.0" step="0.1" value="1.0">
+            </div>
+          </div>
+        </div>
+
+        <!-- Variable 3 -->
+        <div class="var-card">
+          <div class="var-title-row">
+            <span>Variable 3</span>
+            <span class="var-tag var-tag-x3">X<sub>3</sub></span>
+          </div>
+          <div class="var-slider-group">
+            <div class="var-slider-label">
+              <span>Mean (&mu;<sub>3</sub>)</span>
+              <span id="labelMu3">2.0</span>
+            </div>
+            <div class="var-slider-row">
+              <input type="range" id="sliderMu3" class="slider-input" min="-5" max="5" step="0.1" value="2.0">
+              <input type="number" id="inputMu3" class="var-num-input" min="-5" max="5" step="0.1" value="2.0">
+            </div>
+          </div>
+          <div class="var-slider-group">
+            <div class="var-slider-label">
+              <span>Variance (&sigma;<sub>3</sub><sup>2</sup>)</span>
+              <span id="labelVar3">1.0</span>
+            </div>
+            <div class="var-slider-row">
+              <input type="range" id="sliderVar3" class="slider-input" min="0.2" max="4.0" step="0.1" value="1.0">
+              <input type="number" id="inputVar3" class="var-num-input" min="0.2" max="4.0" step="0.1" value="1.0">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- Mathematical Helpers ---
+
+    // Normal PDF: f(x; mu, sigma^2)
+    function normalPdf(x, mu, sigmaSq) {
+      const sigma = Math.sqrt(Math.max(0.0001, sigmaSq));
+      const coef = 1 / (sigma * Math.sqrt(2 * Math.PI));
+      const expTerm = -0.5 * Math.pow((x - mu) / sigma, 2);
+      return coef * Math.exp(expTerm);
+    }
+
+    // High-precision Error Function erf(x) via Abramowitz & Stegun 7.1.26 (max error < 1.5e-7)
+    function erf(x) {
+      const sign = x >= 0 ? 1 : -1;
+      const absX = Math.abs(x);
+
+      const p = 0.3275911;
+      const a1 = 0.254829592;
+      const a2 = -0.284496736;
+      const a3 = 1.421413741;
+      const a4 = -1.453152027;
+      const a5 = 1.061405429;
+
+      const t = 1.0 / (1.0 + p * absX);
+      const poly = ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t;
+      return sign * (1.0 - poly * Math.exp(-absX * absX));
+    }
+
+    // Standard Normal CDF: Phi(z) = P(Z <= z)
+    function standardNormalCdf(z) {
+      return 0.5 * (1.0 + erf(z / Math.SQRT2));
+    }
+
+    // Box-Muller standard normal random number generator
+    function sampleNormal(mu, sigmaSq) {
+      const sigma = Math.sqrt(Math.max(0.0001, sigmaSq));
+      let u1 = 0, u2 = 0;
+      while (u1 === 0) u1 = Math.random();
+      while (u2 === 0) u2 = Math.random();
+      const z0 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+      return mu + sigma * z0;
+    }
+
+    // --- State Variables: Top Normal Plot ---
+    let currentMu = 0.0;
+    let currentSigmaSq = 1.0;
+    let currentX = 0.0;
+
+    // Elements: Top Section
+    const normalSvg = document.getElementById('normalSvg');
+    const muSlider = document.getElementById('muSlider');
+    const muInput = document.getElementById('muInput');
+    const sigmaSqSlider = document.getElementById('sigmaSqSlider');
+    const sigmaSqInput = document.getElementById('sigmaSqInput');
+    const xInput = document.getElementById('xInput');
+
+    const dispMuVal = document.getElementById('dispMuVal');
+    const dispSigmaSqVal = document.getElementById('dispSigmaSqVal');
+    const dispSigmaVal = document.getElementById('dispSigmaVal');
+    const dispZVal = document.getElementById('dispZVal');
+    const dispCdfVal = document.getElementById('dispCdfVal');
+    const dispTailVal = document.getElementById('dispTailVal');
+
+    // --- Render Top Normal Plot ---
+    function renderNormalPlot() {
+      while (normalSvg.firstChild) {
+        normalSvg.removeChild(normalSvg.firstChild);
+      }
+
+      const W = 620;
+      const H = 320;
+      const padLeft = 65;
+      const padRight = 30;
+      const padTop = 25;
+      const padBottom = 50;
+
+      const plotW = W - padLeft - padRight;
+      const plotH = H - padTop - padBottom;
+
+      // Fixed horizontal axis limits: -20 to 20
+      const xMin = -20;
+      const xMax = 20;
+
+      // Static y-axis scaling that updates only at 4 discrete variance thresholds (4.0, 1.0, 0.25, 0.10)
+      // Keeps the top of the normal curve close to ~4/5 (80%) of the plot height at transitions.
+      let yCeil;
+      let yTicks;
+
+      if (currentSigmaSq >= 4.0) {
+        yCeil = 0.25;
+        yTicks = [0.00, 0.05, 0.10, 0.15, 0.20, 0.25];
+      } else if (currentSigmaSq >= 1.0) {
+        yCeil = 0.50;
+        yTicks = [0.00, 0.10, 0.20, 0.30, 0.40, 0.50];
+      } else if (currentSigmaSq >= 0.25) {
+        yCeil = 1.00;
+        yTicks = [0.00, 0.20, 0.40, 0.60, 0.80, 1.00];
+      } else if (currentSigmaSq >= 0.10) {
+        yCeil = 1.50;
+        yTicks = [0.00, 0.30, 0.60, 0.90, 1.20, 1.50];
+      } else {
+        yCeil = 2.00;
+        yTicks = [0.00, 0.40, 0.80, 1.20, 1.60, 2.00];
+      }
+
+      const xScale = val => padLeft + ((val - xMin) / (xMax - xMin)) * plotW;
+      const yScale = val => padTop + (1 - val / yCeil) * plotH;
+
+      // 1. Gridlines and Y-axis ticks
+      yTicks.forEach((val, i) => {
+        const yPos = yScale(val);
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', padLeft);
+        line.setAttribute('y1', yPos);
+        line.setAttribute('x2', W - padRight);
+        line.setAttribute('y2', yPos);
+        line.setAttribute('stroke', i === 0 ? '#cbd5e1' : '#f1f5f9');
+        line.setAttribute('stroke-width', i === 0 ? '1.5' : '1');
+        normalSvg.appendChild(line);
+
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        txt.setAttribute('x', padLeft - 10);
+        txt.setAttribute('y', yPos + 4);
+        txt.setAttribute('text-anchor', 'end');
+        txt.setAttribute('font-size', '11');
+        txt.setAttribute('fill', '#64748b');
+        txt.setAttribute('font-family', 'var(--font-mono)');
+        txt.textContent = val.toFixed(2);
+        normalSvg.appendChild(txt);
+      });
+
+      // Y-axis Title: "Probability Density"
+      const yTitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      yTitle.setAttribute('transform', 'rotate(-90)');
+      yTitle.setAttribute('x', -(padTop + plotH / 2));
+      yTitle.setAttribute('y', 18);
+      yTitle.setAttribute('text-anchor', 'middle');
+      yTitle.setAttribute('font-size', '12');
+      yTitle.setAttribute('font-weight', '600');
+      yTitle.setAttribute('fill', '#475569');
+      yTitle.textContent = 'Probability Density';
+      normalSvg.appendChild(yTitle);
+
+      // 2. X-axis ticks (at intervals of 5 from -20 to 20)
+      for (let xVal = xMin; xVal <= xMax; xVal += 5) {
+        const xPos = xScale(xVal);
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', xPos);
+        line.setAttribute('y1', padTop);
+        line.setAttribute('x2', xPos);
+        line.setAttribute('y2', padTop + plotH);
+        line.setAttribute('stroke', xVal === 0 ? '#e2e8f0' : '#f8fafc');
+        line.setAttribute('stroke-width', '1');
+        normalSvg.appendChild(line);
+
+        const tickLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        tickLine.setAttribute('x1', xPos);
+        tickLine.setAttribute('y1', padTop + plotH);
+        tickLine.setAttribute('x2', xPos);
+        tickLine.setAttribute('y2', padTop + plotH + 5);
+        tickLine.setAttribute('stroke', '#cbd5e1');
+        tickLine.setAttribute('stroke-width', '1.5');
+        normalSvg.appendChild(tickLine);
+
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        txt.setAttribute('x', xPos);
+        txt.setAttribute('y', padTop + plotH + 18);
+        txt.setAttribute('text-anchor', 'middle');
+        txt.setAttribute('font-size', '11');
+        txt.setAttribute('fill', xVal === 0 ? '#0f172a' : '#64748b');
+        txt.setAttribute('font-weight', xVal === 0 ? '600' : '400');
+        txt.setAttribute('font-family', 'var(--font-mono)');
+        txt.textContent = xVal.toString();
+        normalSvg.appendChild(txt);
+      }
+
+      // X-axis Title: "X"
+      const xTitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      xTitle.setAttribute('x', padLeft + plotW / 2);
+      xTitle.setAttribute('y', H - 12);
+      xTitle.setAttribute('text-anchor', 'middle');
+      xTitle.setAttribute('font-size', '13');
+      xTitle.setAttribute('font-weight', '600');
+      xTitle.setAttribute('font-style', 'italic');
+      xTitle.setAttribute('fill', '#0f172a');
+      xTitle.textContent = 'X';
+      normalSvg.appendChild(xTitle);
+
+      // 3. Shaded Area under the Curve up to x
+      const boundedX = Math.min(xMax, Math.max(xMin, currentX));
+      const steps = 300;
+      let shadePathD = `M ${padLeft} ${yScale(0)}`;
+
+      for (let i = 0; i <= steps; i++) {
+        const xVal = xMin + (boundedX - xMin) * (i / steps);
+        const yVal = normalPdf(xVal, currentMu, currentSigmaSq);
+        shadePathD += ` L ${xScale(xVal)} ${yScale(yVal)}`;
+      }
+      shadePathD += ` L ${xScale(boundedX)} ${yScale(0)} Z`;
+
+      const shadePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      shadePath.setAttribute('d', shadePathD);
+      shadePath.setAttribute('fill', 'rgba(37, 99, 235, 0.20)');
+      normalSvg.appendChild(shadePath);
+
+      // 4. Normal PDF Curve Path
+      let curvePathD = '';
+      for (let i = 0; i <= steps; i++) {
+        const xVal = xMin + (xMax - xMin) * (i / steps);
+        const yVal = normalPdf(xVal, currentMu, currentSigmaSq);
+        const px = xScale(xVal);
+        const py = yScale(yVal);
+        curvePathD += (i === 0 ? 'M ' : ' L ') + px + ' ' + py;
+      }
+
+      const curvePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      curvePath.setAttribute('d', curvePathD);
+      curvePath.setAttribute('fill', 'none');
+      curvePath.setAttribute('stroke', '#2563eb');
+      curvePath.setAttribute('stroke-width', '2.5');
+      curvePath.setAttribute('stroke-linejoin', 'round');
+      curvePath.setAttribute('stroke-linecap', 'round');
+      normalSvg.appendChild(curvePath);
+
+      // 5. Vertical line at x
+      if (currentX >= xMin && currentX <= xMax) {
+        const lineX = xScale(currentX);
+        const pdfAtX = normalPdf(currentX, currentMu, currentSigmaSq);
+        const lineYTop = yScale(pdfAtX);
+
+        const vertLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        vertLine.setAttribute('x1', lineX);
+        vertLine.setAttribute('y1', padTop + plotH);
+        vertLine.setAttribute('x2', lineX);
+        vertLine.setAttribute('y2', lineYTop);
+        vertLine.setAttribute('stroke', '#1d4ed8');
+        vertLine.setAttribute('stroke-width', '1.8');
+        vertLine.setAttribute('stroke-dasharray', '3 3');
+        normalSvg.appendChild(vertLine);
+
+        // Marker dot at (x, f(x))
+        const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        dot.setAttribute('cx', lineX);
+        dot.setAttribute('cy', lineYTop);
+        dot.setAttribute('r', '4');
+        dot.setAttribute('fill', '#1d4ed8');
+        dot.setAttribute('stroke', '#ffffff');
+        dot.setAttribute('stroke-width', '1.5');
+        normalSvg.appendChild(dot);
+      }
+    }
+
+    // --- Update Calculations & Displays ---
+    function updateCalculations() {
+      const sigma = Math.sqrt(Math.max(0.0001, currentSigmaSq));
+      const z = (currentX - currentMu) / sigma;
+      const cdf = standardNormalCdf(z);
+      const tail = 1.0 - cdf;
+      const peak = normalPdf(currentMu, currentMu, currentSigmaSq);
+
+      dispMuVal.textContent = `\u03BC = ${currentMu.toFixed(1)}`;
+      dispSigmaSqVal.textContent = `\u03C3\u00B2 = ${currentSigmaSq.toFixed(2)}`;
+      dispSigmaVal.textContent = sigma.toFixed(3);
+
+      dispZVal.textContent = (z >= 0 ? '+' : '') + z.toFixed(3);
+      dispCdfVal.textContent = cdf.toFixed(4);
+      dispTailVal.textContent = tail.toFixed(4);
+
+      renderNormalPlot();
+    }
+
+    // --- Slider & Input Listeners: Top Section ---
+    function setMu(val) {
+      let v = parseFloat(val);
+      if (isNaN(v)) v = 0;
+      v = Math.max(-10, Math.min(10, v));
+      currentMu = v;
+      muSlider.value = currentMu;
+      muInput.value = currentMu.toFixed(1);
+      updateCalculations();
+    }
+
+    function setSigmaSq(val) {
+      let v = parseFloat(val);
+      if (isNaN(v) || v < 0.05) v = 0.05;
+      v = Math.min(10.0, v);
+      currentSigmaSq = v;
+      sigmaSqSlider.value = currentSigmaSq;
+      sigmaSqInput.value = currentSigmaSq.toFixed(2);
+      updateCalculations();
+    }
+
+    function handleXInput(raw) {
+      if (raw === '' || raw === '-' || raw === '.' || raw === '-.') {
+        // User is currently typing a sign or decimal point; do not overwrite
+        return;
+      }
+      const v = parseFloat(raw);
+      if (!isNaN(v)) {
+        currentX = v;
+        updateCalculations();
+      }
+    }
+
+    muSlider.addEventListener('input', e => setMu(e.target.value));
+    muInput.addEventListener('change', e => setMu(e.target.value));
+
+    sigmaSqSlider.addEventListener('input', e => setSigmaSq(e.target.value));
+    sigmaSqInput.addEventListener('change', e => setSigmaSq(e.target.value));
+
+    xInput.addEventListener('input', e => handleXInput(e.target.value));
+
+    xInput.addEventListener('change', e => {
+      const v = parseFloat(e.target.value);
+      if (!isNaN(v)) {
+        currentX = v;
+      } else {
+        xInput.value = currentX;
+      }
+      updateCalculations();
+    });
+
+    xInput.addEventListener('blur', () => {
+      if (xInput.value.trim() === '' || isNaN(parseFloat(xInput.value))) {
+        xInput.value = currentX;
+        updateCalculations();
+      }
+    });
+
+
+    // =========================================================================
+    // Part 4: Combinations of Normal Random Variables Module
+    // =========================================================================
+
+    // Variables state: X1, X2, X3
+    let mu1 = -2.0, var1 = 1.0;
+    let mu2 = 0.0, var2 = 1.0;
+    let mu3 = 2.0, var3 = 1.0;
+
+    // Histogram state for samples
+    const COMBO_X_MIN = -15;
+    const COMBO_X_MAX = 15;
+    const BIN_WIDTH = 0.5;
+    const NUM_BINS = Math.round((COMBO_X_MAX - COMBO_X_MIN) / BIN_WIDTH);
+    let sampleBins = new Array(NUM_BINS).fill(0);
+    let sampleList = [];
+
+    // DOM Elements: Part 4
+    const comboSvg = document.getElementById('comboSvg');
+    const btnSample1 = document.getElementById('btnSample1');
+    const btnSample50 = document.getElementById('btnSample50');
+    const btnClearHist = document.getElementById('btnClearHist');
+
+    const statCount = document.getElementById('statCount');
+    const statSampleMean = document.getElementById('statSampleMean');
+    const statTheoryMean = document.getElementById('statTheoryMean');
+    const statSampleVar = document.getElementById('statSampleVar');
+    const statTheoryVar = document.getElementById('statTheoryVar');
+
+    const sliderMu1 = document.getElementById('sliderMu1');
+    const inputMu1 = document.getElementById('inputMu1');
+    const sliderVar1 = document.getElementById('sliderVar1');
+    const inputVar1 = document.getElementById('inputVar1');
+    const labelMu1 = document.getElementById('labelMu1');
+    const labelVar1 = document.getElementById('labelVar1');
+
+    const sliderMu2 = document.getElementById('sliderMu2');
+    const inputMu2 = document.getElementById('inputMu2');
+    const sliderVar2 = document.getElementById('sliderVar2');
+    const inputVar2 = document.getElementById('inputVar2');
+    const labelMu2 = document.getElementById('labelMu2');
+    const labelVar2 = document.getElementById('labelVar2');
+
+    const sliderMu3 = document.getElementById('sliderMu3');
+    const inputMu3 = document.getElementById('inputMu3');
+    const sliderVar3 = document.getElementById('sliderVar3');
+    const inputVar3 = document.getElementById('inputVar3');
+    const labelMu3 = document.getElementById('labelMu3');
+    const labelVar3 = document.getElementById('labelVar3');
+
+    // Sampling Logic
+    function sampleCombo(count = 1) {
+      for (let i = 0; i < count; i++) {
+        const s1 = sampleNormal(mu1, var1);
+        const s2 = sampleNormal(mu2, var2);
+        const s3 = sampleNormal(mu3, var3);
+        const sum = s1 + s2 + s3;
+
+        sampleList.push(sum);
+
+        const binIdx = Math.floor((sum - COMBO_X_MIN) / BIN_WIDTH);
+        if (binIdx >= 0 && binIdx < NUM_BINS) {
+          sampleBins[binIdx]++;
+        }
+      }
+      updateComboStats();
+      renderComboPlot();
+    }
+
+    function clearSamples() {
+      sampleList = [];
+      sampleBins.fill(0);
+      updateComboStats();
+      renderComboPlot();
+    }
+
+    function updateComboStats() {
+      const theoryMean = mu1 + mu2 + mu3;
+      const theoryVar = var1 + var2 + var3;
+
+      statTheoryMean.textContent = (theoryMean >= 0 ? '+' : '') + theoryMean.toFixed(2);
+      statTheoryVar.textContent = theoryVar.toFixed(2);
+
+      const N = sampleList.length;
+      statCount.textContent = N.toLocaleString();
+
+      if (N === 0) {
+        statSampleMean.textContent = '\u2014';
+        statSampleVar.textContent = '\u2014';
+      } else {
+        const mean = sampleList.reduce((acc, val) => acc + val, 0) / N;
+        let variance = 0;
+        if (N > 1) {
+          variance = sampleList.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / (N - 1);
+        }
+        statSampleMean.textContent = (mean >= 0 ? '+' : '') + mean.toFixed(2);
+        statSampleVar.textContent = variance.toFixed(2);
+      }
+    }
+
+    // Render Combinations & Superimposed Histogram Plot
+    function renderComboPlot() {
+      while (comboSvg.firstChild) {
+        comboSvg.removeChild(comboSvg.firstChild);
+      }
+
+      const W = 620;
+      const H = 320;
+      const padLeft = 65;
+      const padRight = 30;
+      const padTop = 25;
+      const padBottom = 50;
+
+      const plotW = W - padLeft - padRight;
+      const plotH = H - padTop - padBottom;
+
+      const xMin = COMBO_X_MIN;
+      const xMax = COMBO_X_MAX;
+
+      // Theoretical sum parameters
+      const muSum = mu1 + mu2 + mu3;
+      const varSum = var1 + var2 + var3;
+
+      // Find tallest peak among the 4 normal distribution curves
+      const peak1 = normalPdf(mu1, mu1, var1);
+      const peak2 = normalPdf(mu2, mu2, var2);
+      const peak3 = normalPdf(mu3, mu3, var3);
+      const peakSum = normalPdf(muSum, muSum, varSum);
+      const maxCurvePeak = Math.max(peak1, peak2, peak3, peakSum);
+
+      // Y-axis scale based on tallest curve
+      const yCeil = Math.ceil(maxCurvePeak * 1.25 * 10) / 10;
+
+      const xScale = val => padLeft + ((val - xMin) / (xMax - xMin)) * plotW;
+      const yScale = val => padTop + (1 - val / yCeil) * plotH;
+
+      // 1. Gridlines and Y-axis Ticks
+      const numYTicks = 5;
+      for (let i = 0; i <= numYTicks; i++) {
+        const val = (yCeil / numYTicks) * i;
+        const yPos = yScale(val);
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', padLeft);
+        line.setAttribute('y1', yPos);
+        line.setAttribute('x2', W - padRight);
+        line.setAttribute('y2', yPos);
+        line.setAttribute('stroke', i === 0 ? '#cbd5e1' : '#f1f5f9');
+        line.setAttribute('stroke-width', i === 0 ? '1.5' : '1');
+        comboSvg.appendChild(line);
+
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        txt.setAttribute('x', padLeft - 10);
+        txt.setAttribute('y', yPos + 4);
+        txt.setAttribute('text-anchor', 'end');
+        txt.setAttribute('font-size', '11');
+        txt.setAttribute('fill', '#64748b');
+        txt.setAttribute('font-family', 'var(--font-mono)');
+        txt.textContent = val.toFixed(2);
+        comboSvg.appendChild(txt);
+      }
+
+      // Y-axis Title
+      const yTitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      yTitle.setAttribute('transform', 'rotate(-90)');
+      yTitle.setAttribute('x', -(padTop + plotH / 2));
+      yTitle.setAttribute('y', 18);
+      yTitle.setAttribute('text-anchor', 'middle');
+      yTitle.setAttribute('font-size', '12');
+      yTitle.setAttribute('font-weight', '600');
+      yTitle.setAttribute('fill', '#475569');
+      yTitle.textContent = 'Probability Density';
+      comboSvg.appendChild(yTitle);
+
+      // 2. X-axis Ticks
+      for (let xVal = xMin; xVal <= xMax; xVal += 5) {
+        const xPos = xScale(xVal);
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', xPos);
+        line.setAttribute('y1', padTop);
+        line.setAttribute('x2', xPos);
+        line.setAttribute('y2', padTop + plotH);
+        line.setAttribute('stroke', xVal === 0 ? '#e2e8f0' : '#f8fafc');
+        line.setAttribute('stroke-width', '1');
+        comboSvg.appendChild(line);
+
+        const tickLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        tickLine.setAttribute('x1', xPos);
+        tickLine.setAttribute('y1', padTop + plotH);
+        tickLine.setAttribute('x2', xPos);
+        tickLine.setAttribute('y2', padTop + plotH + 5);
+        tickLine.setAttribute('stroke', '#cbd5e1');
+        tickLine.setAttribute('stroke-width', '1.5');
+        comboSvg.appendChild(tickLine);
+
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        txt.setAttribute('x', xPos);
+        txt.setAttribute('y', padTop + plotH + 18);
+        txt.setAttribute('text-anchor', 'middle');
+        txt.setAttribute('font-size', '11');
+        txt.setAttribute('fill', xVal === 0 ? '#0f172a' : '#64748b');
+        txt.setAttribute('font-weight', xVal === 0 ? '600' : '400');
+        txt.setAttribute('font-family', 'var(--font-mono)');
+        txt.textContent = xVal.toString();
+        comboSvg.appendChild(txt);
+      }
+
+      // X-axis Title
+      const xTitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      xTitle.setAttribute('x', padLeft + plotW / 2);
+      xTitle.setAttribute('y', H - 12);
+      xTitle.setAttribute('text-anchor', 'middle');
+      xTitle.setAttribute('font-size', '13');
+      xTitle.setAttribute('font-weight', '600');
+      xTitle.setAttribute('font-style', 'italic');
+      xTitle.setAttribute('fill', '#0f172a');
+      xTitle.textContent = 'X';
+      comboSvg.appendChild(xTitle);
+
+      // Helper to draw a smooth curve path
+      function drawCurve(mu, v, color, width, isDashed = false) {
+        const steps = 250;
+        let d = '';
+        for (let i = 0; i <= steps; i++) {
+          const xVal = xMin + (xMax - xMin) * (i / steps);
+          const yVal = normalPdf(xVal, mu, v);
+          const px = xScale(xVal);
+          const py = yScale(yVal);
+          d += (i === 0 ? 'M ' : ' L ') + px + ' ' + py;
+        }
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', d);
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke', color);
+        path.setAttribute('stroke-width', width);
+        path.setAttribute('stroke-linejoin', 'round');
+        path.setAttribute('stroke-linecap', 'round');
+        if (isDashed) {
+          path.setAttribute('stroke-dasharray', '4 3');
+        }
+        comboSvg.appendChild(path);
+      }
+
+      // 3. Continuous Normal Curves (X1, X2, X3, and Sum Y)
+      drawCurve(mu1, var1, '#2563eb', '1.8'); // X1: Blue
+      drawCurve(mu2, var2, '#059669', '1.8'); // X2: Emerald Green
+      drawCurve(mu3, var3, '#7c3aed', '1.8'); // X3: Purple
+      drawCurve(muSum, varSum, '#0f172a', '2.6'); // Sum Y: Solid Black
+
+      // 4. Superimposed Pale, Transparent Histogram in Front
+      // Requirement: Maximum height of any bar in the histogram is the same height as the peak of the combined normal distribution plot (in black)
+      let maxBinCount = 0;
+      for (let b = 0; b < NUM_BINS; b++) {
+        if (sampleBins[b] > maxBinCount) {
+          maxBinCount = sampleBins[b];
+        }
+      }
+
+      if (maxBinCount > 0) {
+        for (let b = 0; b < NUM_BINS; b++) {
+          const count = sampleBins[b];
+          if (count === 0) continue;
+
+          // Scaled height: tallest bar matches peak of combined normal curve (in black)
+          const effectiveDensity = (count / maxBinCount) * peakSum;
+          const barXLeft = xScale(COMBO_X_MIN + b * BIN_WIDTH);
+          const barXRight = xScale(COMBO_X_MIN + (b + 1) * BIN_WIDTH);
+          const barW = Math.max(1, barXRight - barXLeft);
+          const barYTop = yScale(effectiveDensity);
+          const barYBottom = yScale(0);
+          const barH = barYBottom - barYTop;
+
+          const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          rect.setAttribute('x', barXLeft);
+          rect.setAttribute('y', barYTop);
+          rect.setAttribute('width', barW);
+          rect.setAttribute('height', barH);
+          rect.setAttribute('fill', 'rgba(15, 23, 42, 0.22)');
+          rect.setAttribute('stroke', 'rgba(15, 23, 42, 0.45)');
+          rect.setAttribute('stroke-width', '0.75');
+          rect.setAttribute('shape-rendering', 'crispEdges');
+          comboSvg.appendChild(rect);
+        }
+      }
+    }
+
+    // --- Listeners for the 3 Variables ---
+    function setupVarListener(slider, input, label, setFn) {
+      slider.addEventListener('input', e => {
+        const val = parseFloat(e.target.value);
+        input.value = val.toFixed(1);
+        label.textContent = val.toFixed(1);
+        setFn(val);
+      });
+      input.addEventListener('change', e => {
+        let val = parseFloat(e.target.value);
+        if (isNaN(val)) val = 0;
+        slider.value = val;
+        label.textContent = val.toFixed(1);
+        setFn(val);
+      });
+    }
+
+    setupVarListener(sliderMu1, inputMu1, labelMu1, v => { mu1 = v; updateComboStats(); renderComboPlot(); });
+    setupVarListener(sliderVar1, inputVar1, labelVar1, v => { var1 = Math.max(0.2, v); updateComboStats(); renderComboPlot(); });
+
+    setupVarListener(sliderMu2, inputMu2, labelMu2, v => { mu2 = v; updateComboStats(); renderComboPlot(); });
+    setupVarListener(sliderVar2, inputVar2, labelVar2, v => { var2 = Math.max(0.2, v); updateComboStats(); renderComboPlot(); });
+
+    setupVarListener(sliderMu3, inputMu3, labelMu3, v => { mu3 = v; updateComboStats(); renderComboPlot(); });
+    setupVarListener(sliderVar3, inputVar3, labelVar3, v => { var3 = Math.max(0.2, v); updateComboStats(); renderComboPlot(); });
+
+    // Buttons
+    btnSample1.addEventListener('click', () => sampleCombo(1));
+    btnSample50.addEventListener('click', () => sampleCombo(50));
+    btnClearHist.addEventListener('click', () => clearSamples());
+
+    // Initialize all displays
+    updateCalculations();
+    updateComboStats();
+    renderComboPlot();
+  </script>
+</body>
+
+</html>
