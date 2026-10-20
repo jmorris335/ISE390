@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plinko Board</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --border-subtle: #f1f5f9;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-light: #dbeafe;
+      --green-btn: #16a34a;
+      --green-btn-hover: #15803d;
+      --green-btn-active: #166534;
+      --card-bg: #ffffff;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      padding: 40px 20px 80px;
+      display: flex;
+      justify-content: center;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 880px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Navigation Back Link */
+    .nav-bar {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      margin-bottom: -10px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+
+    .back-link:hover {
+      color: var(--text);
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 600;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+    }
+
+    .header-stats {
+      font-family: var(--font-mono);
+      font-size: 0.84rem;
+      color: var(--text-muted);
+    }
+
+    .header-stats span {
+      color: #0f172a;
+      font-weight: 600;
+    }
+
+    /* Board Card */
+    .board-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    }
+
+    .canvas-container {
+      width: 100%;
+      position: relative;
+      background: #fafbfc;
+      line-height: 0;
+    }
+
+    canvas#plinkoCanvas {
+      width: 100%;
+      height: 650px;
+      display: block;
+    }
+
+    /* Controls Row: Buttons */
+    .actions-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 18px 20px;
+      border-top: 1px solid var(--border);
+      background: #ffffff;
+    }
+
+    .btn-drop {
+      background: var(--green-btn);
+      color: #ffffff;
+      border: 1px solid var(--green-btn-hover);
+      font-family: var(--font-sans);
+      font-size: 1.15rem;
+      font-weight: 600;
+      padding: 12px 42px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+      box-shadow: 0 2px 6px rgba(22, 163, 74, 0.25);
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .btn-drop:hover {
+      background: var(--green-btn-hover);
+      box-shadow: 0 4px 10px rgba(22, 163, 74, 0.35);
+    }
+
+    .btn-drop:active {
+      background: var(--green-btn-active);
+      transform: scale(0.97);
+    }
+
+    .btn-drop-50 {
+      background: #ffffff;
+      color: #15803d;
+      border: 1.5px solid var(--green-btn);
+      font-family: var(--font-sans);
+      font-size: 1.05rem;
+      font-weight: 600;
+      padding: 11px 26px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s, box-shadow 0.15s;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .btn-drop-50:hover {
+      background: var(--green-btn);
+      color: #ffffff;
+      box-shadow: 0 4px 10px rgba(22, 163, 74, 0.25);
+    }
+
+    .btn-drop-50:active {
+      background: var(--green-btn-active);
+      border-color: var(--green-btn-active);
+      transform: scale(0.97);
+    }
+
+    .btn-reset {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-family: var(--font-sans);
+      font-size: 0.88rem;
+      font-weight: 500;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+      user-select: none;
+    }
+
+    .btn-reset:hover {
+      background: #f8fafc;
+      color: var(--text);
+      border-color: #cbd5e1;
+    }
+
+    .btn-reset:active {
+      transform: scale(0.97);
+    }
+
+    /* Parameters Card */
+    .parameters-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .slider-item {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .slider-label {
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .slider-input {
+      flex: 1;
+      height: 6px;
+      border-radius: 3px;
+      background: #e2e8f0;
+      outline: none;
+      cursor: pointer;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .slider-input::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+      transition: transform 0.1s, background-color 0.15s;
+    }
+
+    .slider-input::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+      background: var(--primary-dark);
+    }
+
+    .slider-input::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .num-input {
+      width: 68px;
+      padding: 5px 8px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      color: #0f172a;
+      background: #ffffff;
+      text-align: right;
+    }
+
+    .num-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px var(--primary-light);
+    }
+
+    @media (max-width: 600px) {
+      .btn-drop {
+        padding: 10px 24px;
+        font-size: 1.05rem;
+      }
+
+      .btn-drop-50 {
+        padding: 9px 18px;
+        font-size: 0.95rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <!-- Back to Index -->
+    <div class="nav-bar">
+      <a href="../index.html" class="back-link">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10 12L6 8L10 4" />
+        </svg>
+        Back to Overview
+      </a>
+    </div>
+
+    <!-- Header -->
+    <header>
+      <h1>Plinko</h1>
+      <div class="header-stats">
+        Total Dropped: <span id="totalDroppedDisplay">0</span>
+      </div>
+    </header>
+
+    <!-- Plinko Board Display -->
+    <div class="board-card">
+      <div class="canvas-container" id="canvasContainer">
+        <canvas id="plinkoCanvas"></canvas>
+      </div>
+
+      <!-- Action Buttons underneath board -->
+      <div class="actions-row">
+        <button class="btn-drop" id="btnDrop">drop</button>
+        <button class="btn-drop-50" id="btnDrop50">Drop 50</button>
+        <button class="btn-reset" id="btnReset">Reset</button>
+      </div>
+    </div>
+
+    <!-- Parameters Sliders & Inputs -->
+    <div class="parameters-card">
+      <!-- Number of Slots -->
+      <div class="slider-item">
+        <div class="slider-header">
+          <label class="slider-label" for="sliderSlots">Number of slots</label>
+        </div>
+        <div class="slider-row">
+          <input type="range" class="slider-input" id="sliderSlots" min="3" max="25" step="2" value="9">
+          <input type="number" class="num-input" id="inputSlots" min="3" max="25" step="2" value="9">
+        </div>
+      </div>
+
+      <!-- Drop Speed -->
+      <div class="slider-item">
+        <div class="slider-header">
+          <label class="slider-label" for="sliderSpeed">Drop speed</label>
+        </div>
+        <div class="slider-row">
+          <input type="range" class="slider-input" id="sliderSpeed" min="0.5" max="3.0" step="0.1" value="1.2">
+          <input type="number" class="num-input" id="inputSpeed" min="0.5" max="3.0" step="0.1" value="1.2">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State & Parameters
+    let numSlots = 9;       // Always odd
+    let dropSpeed = 1.2;     // Speed multiplier
+    let totalDropped = 0;
+
+    // Simulation Data
+    let activeBalls = [];
+    let settledInSlots = []; // Array of arrays: settledInSlots[slotIndex] = [{x, y, r}]
+    let slotCounts = [];     // Array of counts per slot
+    let pegGlows = [];       // Array of {x, y, time}
+
+    // Canvas & Geometry
+    const canvas = document.getElementById('plinkoCanvas');
+    const ctx = canvas.getContext('2d');
+    const container = document.getElementById('canvasContainer');
+
+    const pegAreaTop = 40;
+    const pegAreaHeight = 260;
+    const slotYStart = pegAreaTop + pegAreaHeight; // 300px (fixed peg area)
+    let baseSlotDepth = Math.round(190 * 1.6); // 304px (1.6x default height)
+    let slotDepth = baseSlotDepth;
+    let targetSlotDepth = baseSlotDepth;
+
+    let boardWidth = 800;
+    let slotWidth = boardWidth / numSlots;
+    let slotFloorY = slotYStart + slotDepth;
+    let boardHeight = slotFloorY + 44;
+
+    // Burst queue for Drop 50
+    let ballsToDrop = 0;
+    let timeSinceLastDrop = 0;
+
+    // UI Elements
+    const btnDrop = document.getElementById('btnDrop');
+    const btnDrop50 = document.getElementById('btnDrop50');
+    const btnReset = document.getElementById('btnReset');
+    const totalDroppedDisplay = document.getElementById('totalDroppedDisplay');
+
+    const sliderSlots = document.getElementById('sliderSlots');
+    const inputSlots = document.getElementById('inputSlots');
+
+    const sliderSpeed = document.getElementById('sliderSpeed');
+    const inputSpeed = document.getElementById('inputSpeed');
+
+    // Initialize Slots Data
+    function initSlotsData() {
+      settledInSlots = [];
+      slotCounts = [];
+      for (let i = 0; i < numSlots; i++) {
+        settledInSlots.push([]);
+        slotCounts.push(0);
+      }
+      totalDropped = 0;
+      updateTotalDisplay();
+    }
+
+    function updateTotalDisplay() {
+      totalDroppedDisplay.textContent = totalDropped;
+    }
+
+    // Check if slots have reached the very top and need to be resized deeper
+    function checkSlotDepthExpansion() {
+      let maxCount = 0;
+      for (let i = 0; i < numSlots; i++) {
+        if (slotCounts[i] > maxCount) maxCount = slotCounts[i];
+      }
+      const r = getBallRadius();
+      const stackHeight = maxCount * (2 * r);
+      // Resize only when balls reach the very top of the slot
+      if (stackHeight >= targetSlotDepth - r) {
+        const resizeIncrement = Math.round(5 * (2 * r)); // Same increase in height with each resize
+        while (maxCount * (2 * r) >= targetSlotDepth - r) {
+          targetSlotDepth += resizeIncrement;
+        }
+        targetSlotDepth = Math.min(1400, targetSlotDepth);
+      }
+    }
+
+    // Queue burst drop (e.g. 50 balls)
+    function queueDrop(count) {
+      ballsToDrop += count;
+    }
+
+    // Geometry & Peg Sizing Helpers
+    function getPegRowsCount() {
+      return Math.max(1, numSlots - 1);
+    }
+
+    function getRowSpacing() {
+      const numPegRows = getPegRowsCount();
+      const pegAreaBottom = slotYStart - 20;
+      return (pegAreaBottom - pegAreaTop) / Math.max(1, numPegRows - 1);
+    }
+
+    // Increased Peg Radius (substantial, tactile pins)
+    function getPegRadius() {
+      const rowSpacing = getRowSpacing();
+      return Math.max(4.5, Math.min(8.5, rowSpacing * 0.28, slotWidth * 0.12));
+    }
+
+    // Ball Radius based on slot width and peg row spacing
+    function getBallRadius() {
+      const rowSpacing = getRowSpacing();
+      return Math.max(4.5, Math.min(7.5, (slotWidth - 4) * 0.28, rowSpacing * 0.24));
+    }
+
+    function getBounceDuration(rowSpacing) {
+      return Math.max(0.12, Math.min(0.28, 0.032 * Math.sqrt(rowSpacing) + 0.05));
+    }
+
+    function getArcHeight(rowSpacing) {
+      return Math.max(4.0, Math.min(14.0, rowSpacing * 0.32));
+    }
+
+    // Calculate Peg Positions in a triangular shape: 1 peg at top, n-1 pegs on bottom row
+    function getPegPos(r, k) {
+      const rowSpacing = getRowSpacing();
+      const centerX = boardWidth / 2;
+      const y = pegAreaTop + r * rowSpacing;
+      const x = centerX + (k - r / 2) * slotWidth;
+      const rPeg = getPegRadius();
+      return { x, y, r: rPeg, row: r, col: k };
+    }
+
+    function getPegs() {
+      const pegs = [];
+      const numPegRows = getPegRowsCount();
+      for (let r = 0; r < numPegRows; r++) {
+        for (let k = 0; k <= r; k++) {
+          pegs.push(getPegPos(r, k));
+        }
+      }
+      return pegs;
+    }
+
+    // Resize Canvas to fit container with HiDPI support
+    function resizeCanvas() {
+      const rect = container.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      boardWidth = Math.max(320, rect.width);
+      baseSlotDepth = window.innerWidth <= 600 ? Math.round(160 * 1.6) : Math.round(190 * 1.6);
+      targetSlotDepth = Math.max(targetSlotDepth, baseSlotDepth);
+      slotDepth = Math.max(slotDepth, baseSlotDepth);
+      slotWidth = boardWidth / numSlots;
+      slotFloorY = slotYStart + slotDepth;
+      boardHeight = slotFloorY + 44;
+
+      canvas.width = boardWidth * dpr;
+      canvas.height = boardHeight * dpr;
+      canvas.style.width = boardWidth + 'px';
+      canvas.style.height = boardHeight + 'px';
+
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
+
+      // Update positions of existing settled balls to stay aligned in vertical columns
+      const r = getBallRadius();
+      for (let i = 0; i < numSlots; i++) {
+        if (!settledInSlots[i]) continue;
+        const list = settledInSlots[i];
+        const slotCenterX = (i + 0.5) * slotWidth;
+        const count = list.length;
+        const maxSlotH = slotDepth - 10;
+        const naturalStep = 2 * r;
+        const stepY = (count * naturalStep > maxSlotH) ? (maxSlotH / count) : naturalStep;
+        for (let j = 0; j < list.length; j++) {
+          list[j].x = slotCenterX;
+          list[j].y = slotFloorY - r - j * stepY;
+          list[j].r = r;
+        }
+      }
+
+      // Re-anchor active balls during window resize
+      const numPegRows = getPegRowsCount();
+      const rowSpacing = getRowSpacing();
+      for (let i = 0; i < activeBalls.length; i++) {
+        const b = activeBalls[i];
+        b.r = r;
+        if (b.state === 'dropping_to_first_peg') {
+          const peg0 = getPegPos(0, 0);
+          b.targetX = peg0.x;
+          b.targetY = peg0.y - peg0.r - b.r;
+          b.x = peg0.x;
+        } else if (b.state === 'bouncing') {
+          const pStart = getPegPos(b.currentRow, b.currentCol);
+          b.startX = pStart.x;
+          b.startY = pStart.y - pStart.r - b.r;
+          if (b.targetRow >= numPegRows) {
+            b.targetX = (b.slotIdx + 0.5) * slotWidth;
+            b.targetY = slotYStart + b.r;
+          } else {
+            const pTarget = getPegPos(b.targetRow, b.targetCol);
+            b.targetX = pTarget.x;
+            b.targetY = pTarget.y - pTarget.r - b.r;
+          }
+          b.arcHeight = getArcHeight(rowSpacing);
+          b.bounceDuration = getBounceDuration(rowSpacing);
+          const u = Math.min(1, b.bounceProgress);
+          b.x = (1 - u) * b.startX + u * b.targetX;
+          b.y = (1 - u) * b.startY + u * b.targetY - 4 * b.arcHeight * u * (1 - u);
+        } else if (b.state === 'falling_in_slot') {
+          b.x = (b.slotIdx + 0.5) * slotWidth;
+        }
+      }
+    }
+
+    // Drop a Single Ball
+    function dropBall() {
+      const r = getBallRadius();
+      const peg0 = getPegPos(0, 0);
+      const startX = boardWidth / 2;
+      const startY = 14;
+      const targetY = peg0.y - peg0.r - r;
+
+      const ball = {
+        state: 'dropping_to_first_peg',
+        x: startX,
+        y: startY,
+        vy: Math.max(50, 40 * dropSpeed),
+        r: r,
+        color: '#2563eb', // Royal Blue
+        currentRow: 0,
+        currentCol: 0,
+        targetRow: 0,
+        targetCol: 0,
+        startX: startX,
+        startY: startY,
+        targetX: peg0.x,
+        targetY: targetY,
+        bounceProgress: 0,
+        bounceDuration: 0.2,
+        arcHeight: 10,
+        slotIdx: -1,
+        settled: false
+      };
+      activeBalls.push(ball);
+      totalDropped++;
+      updateTotalDisplay();
+    }
+
+    // Physics Update
+    const GRAVITY = 720;
+    let lastTime = performance.now();
+
+    function updatePhysics(dt) {
+      const numPegRows = getPegRowsCount();
+      const rowSpacing = getRowSpacing();
+
+      // Process queued burst drops (e.g. Drop 50)
+      if (ballsToDrop > 0) {
+        timeSinceLastDrop += dt;
+        const dropInterval = Math.max(0.012, 0.028 / dropSpeed);
+        while (timeSinceLastDrop >= dropInterval && ballsToDrop > 0) {
+          dropBall();
+          ballsToDrop--;
+          timeSinceLastDrop -= dropInterval;
+        }
+      }
+
+      // Smoothly expand slot depth when slots need to become deeper
+      if (slotDepth < targetSlotDepth) {
+        slotDepth += (targetSlotDepth - slotDepth) * 0.12;
+        if (targetSlotDepth - slotDepth < 0.5) {
+          slotDepth = targetSlotDepth;
+        }
+        slotFloorY = slotYStart + slotDepth;
+        boardHeight = slotFloorY + 44;
+
+        const dpr = window.devicePixelRatio || 1;
+        const targetCanvasH = Math.round(boardHeight * dpr);
+        if (canvas.height !== targetCanvasH) {
+          canvas.height = targetCanvasH;
+          canvas.style.height = boardHeight + 'px';
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
+          ctx.scale(dpr, dpr);
+        }
+
+        // Keep existing settled balls anchored relative to slot floor
+        const r = getBallRadius();
+        for (let i = 0; i < numSlots; i++) {
+          const list = settledInSlots[i];
+          const slotCenterX = (i + 0.5) * slotWidth;
+          const count = list.length;
+          const maxSlotH = slotDepth - 10;
+          const naturalStep = 2 * r;
+          const stepY = (count * naturalStep > maxSlotH) ? (maxSlotH / count) : naturalStep;
+          for (let j = 0; j < list.length; j++) {
+            list[j].x = slotCenterX;
+            list[j].y = slotFloorY - r - j * stepY;
+            list[j].r = r;
+          }
+        }
+      }
+
+      // Sub-step for physics integration
+      const subSteps = Math.max(2, Math.ceil(dropSpeed * 2));
+      const stepDt = dt / subSteps;
+
+      for (let s = 0; s < subSteps; s++) {
+        for (let i = activeBalls.length - 1; i >= 0; i--) {
+          const b = activeBalls[i];
+
+          if (b.state === 'dropping_to_first_peg') {
+            b.vy += GRAVITY * stepDt * dropSpeed;
+            b.y += b.vy * stepDt * dropSpeed;
+            b.x = b.targetX;
+
+            if (b.y >= b.targetY) {
+              b.y = b.targetY;
+              const peg0 = getPegPos(0, 0);
+              pegGlows.push({ x: peg0.x, y: peg0.y, r: peg0.r, time: performance.now() });
+
+              // 50/50 chance of bouncing to closest right or left peg below
+              const goRight = Math.random() < 0.5;
+              b.currentRow = 0;
+              b.currentCol = 0;
+              b.startX = b.targetX;
+              b.startY = b.targetY;
+
+              if (numPegRows > 1) {
+                b.targetRow = 1;
+                b.targetCol = goRight ? 1 : 0;
+                const nextPeg = getPegPos(b.targetRow, b.targetCol);
+                b.targetX = nextPeg.x;
+                b.targetY = nextPeg.y - nextPeg.r - b.r;
+              } else {
+                b.targetRow = numPegRows;
+                b.slotIdx = goRight ? 1 : 0;
+                b.targetX = (b.slotIdx + 0.5) * slotWidth;
+                b.targetY = slotYStart + b.r;
+              }
+
+              b.bounceProgress = 0;
+              b.bounceDuration = getBounceDuration(rowSpacing);
+              b.arcHeight = getArcHeight(rowSpacing);
+              b.state = 'bouncing';
+            }
+          } else if (b.state === 'bouncing') {
+            b.bounceProgress += (stepDt * dropSpeed) / b.bounceDuration;
+            const u = Math.min(1, b.bounceProgress);
+
+            b.x = (1 - u) * b.startX + u * b.targetX;
+            b.y = (1 - u) * b.startY + u * b.targetY - 4 * b.arcHeight * u * (1 - u);
+
+            if (b.bounceProgress >= 1) {
+              if (b.targetRow >= numPegRows) {
+                // Reached the slot opening! Transition to falling in slot
+                b.state = 'falling_in_slot';
+                b.x = (b.slotIdx + 0.5) * slotWidth;
+                b.y = slotYStart + b.r;
+                b.vy = Math.max(60, 40 + dropSpeed * 40);
+              } else {
+                b.x = b.targetX;
+                b.y = b.targetY;
+
+                const currPeg = getPegPos(b.targetRow, b.targetCol);
+                pegGlows.push({ x: currPeg.x, y: currPeg.y, r: currPeg.r, time: performance.now() });
+
+                const goRight = Math.random() < 0.5;
+                b.currentRow = b.targetRow;
+                b.currentCol = b.targetCol;
+                b.startX = b.targetX;
+                b.startY = b.targetY;
+
+                // Check if reached bottom row of pegs (r === numPegRows - 1)
+                if (b.currentRow >= numPegRows - 1) {
+                  // Bottom peg reached! Bounce off this peg into adjacent slot
+                  b.targetRow = numPegRows; // into slot
+                  b.slotIdx = b.currentCol + (goRight ? 1 : 0);
+                  b.targetX = (b.slotIdx + 0.5) * slotWidth;
+                  b.targetY = slotYStart + b.r;
+                } else {
+                  // Bounce to next peg row below
+                  b.targetRow = b.currentRow + 1;
+                  b.targetCol = b.currentCol + (goRight ? 1 : 0);
+                  const nextPeg = getPegPos(b.targetRow, b.targetCol);
+                  b.targetX = nextPeg.x;
+                  b.targetY = nextPeg.y - nextPeg.r - b.r;
+                }
+
+                b.bounceProgress = 0;
+                b.bounceDuration = getBounceDuration(rowSpacing);
+                b.arcHeight = getArcHeight(rowSpacing);
+              }
+            }
+          } else if (b.state === 'falling_in_slot') {
+            const slotCenterX = (b.slotIdx + 0.5) * slotWidth;
+            b.x = slotCenterX;
+            b.vy += GRAVITY * stepDt * dropSpeed;
+            b.y += b.vy * stepDt * dropSpeed;
+
+            const settledList = settledInSlots[b.slotIdx];
+            const C = settledList.length;
+            const maxSlotH = slotDepth - 10;
+            const naturalStep = 2 * b.r;
+            const stepY = ((C + 1) * naturalStep > maxSlotH) ? (maxSlotH / (C + 1)) : naturalStep;
+            const restY = slotFloorY - b.r - C * stepY;
+
+            if (b.y >= restY) {
+              b.y = restY;
+              b.settled = true;
+              settledList.push({ x: slotCenterX, y: restY, r: b.r });
+
+              if (stepY < naturalStep) {
+                for (let j = 0; j < settledList.length; j++) {
+                  settledList[j].x = slotCenterX;
+                  settledList[j].y = slotFloorY - settledList[j].r - j * stepY;
+                }
+              }
+
+              slotCounts[b.slotIdx]++;
+              activeBalls.splice(i, 1);
+              checkSlotDepthExpansion();
+            }
+          }
+        }
+      }
+    }
+
+    // Render Canvas
+    function render() {
+      ctx.clearRect(0, 0, boardWidth, boardHeight);
+
+      // 1. Draw Deep Slot Backgrounds & Dividers
+      const halfK = (numSlots - 1) / 2;
+
+      // Slot backgrounds
+      for (let i = 0; i < numSlots; i++) {
+        const x = i * slotWidth;
+        // Alternating subtle tint for slots
+        ctx.fillStyle = (i % 2 === 0) ? 'rgba(241, 245, 249, 0.45)' : 'rgba(248, 250, 252, 0.45)';
+        ctx.fillRect(x, slotYStart, slotWidth, slotFloorY - slotYStart);
+      }
+
+      // Slot Dividers
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 1.5;
+      for (let i = 1; i < numSlots; i++) {
+        const x = i * slotWidth;
+        ctx.beginPath();
+        ctx.moveTo(x, slotYStart);
+        ctx.lineTo(x, slotFloorY);
+        ctx.stroke();
+
+        // Rounded cap on top of divider
+        ctx.fillStyle = '#94a3b8';
+        ctx.beginPath();
+        ctx.arc(x, slotYStart, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Slot Floor Line
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, slotFloorY);
+      ctx.lineTo(boardWidth, slotFloorY);
+      ctx.stroke();
+
+      // Outer Board Border Lines (around slots)
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, slotYStart);
+      ctx.lineTo(0, boardHeight);
+      ctx.moveTo(boardWidth, slotYStart);
+      ctx.lineTo(boardWidth, boardHeight);
+      ctx.stroke();
+
+      // Drop Nozzle Indicator at Top Center
+      const dropX = boardWidth / 2;
+      ctx.fillStyle = '#e2e8f0';
+      ctx.beginPath();
+      ctx.moveTo(dropX - 16, 0);
+      ctx.lineTo(dropX + 16, 0);
+      ctx.lineTo(dropX + 7, 14);
+      ctx.lineTo(dropX - 7, 14);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // 2. Draw Pegs
+      const pegs = getPegs();
+      const now = performance.now();
+
+      // Clean up old peg glows
+      pegGlows = pegGlows.filter(g => now - g.time < 220);
+
+      // Draw glows
+      for (let i = 0; i < pegGlows.length; i++) {
+        const g = pegGlows[i];
+        const progress = (now - g.time) / 220;
+        const alpha = (1 - progress) * 0.55;
+        const glowR = g.r * (1.1 + progress * 1.5);
+        ctx.fillStyle = `rgba(37, 99, 235, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(g.x, g.y, glowR, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Draw peg pins
+      for (let p = 0; p < pegs.length; p++) {
+        const peg = pegs[p];
+
+        // Base shadow
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.12)';
+        ctx.beginPath();
+        ctx.arc(peg.x, peg.y + 1, peg.r, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Metallic radial gradient for peg pin
+        const grad = ctx.createRadialGradient(
+          peg.x - peg.r * 0.35, peg.y - peg.r * 0.35, peg.r * 0.1,
+          peg.x, peg.y, peg.r
+        );
+        grad.addColorStop(0, '#64748b'); // slate-500
+        grad.addColorStop(0.75, '#334155'); // slate-700
+        grad.addColorStop(1, '#1e293b'); // slate-800
+
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(peg.x, peg.y, peg.r, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Pin specular highlight
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+        ctx.beginPath();
+        ctx.arc(peg.x - peg.r * 0.35, peg.y - peg.r * 0.35, peg.r * 0.32, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 3. Draw Settled Balls in Slots
+      for (let i = 0; i < numSlots; i++) {
+        const list = settledInSlots[i];
+        for (let b = 0; b < list.length; b++) {
+          const sb = list[b];
+          drawBall(sb.x, sb.y, sb.r);
+        }
+      }
+
+      // 4. Draw Active (In-flight) Balls
+      for (let i = 0; i < activeBalls.length; i++) {
+        const b = activeBalls[i];
+        drawBall(b.x, b.y, b.r);
+      }
+
+      // 5. Draw Slot Labels (Names [-2, -1, 0, 1, 2]) & Ball Counts
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      const labelFontSize = Math.min(13, Math.max(9, slotWidth * 0.32));
+      const countFontSize = Math.min(11, Math.max(8, slotWidth * 0.28));
+
+      for (let i = 0; i < numSlots; i++) {
+        const slotName = i - halfK; // e.g. -2, -1, 0, 1, 2
+        const slotCenterX = (i + 0.5) * slotWidth;
+
+        // Slot Name below the floor line
+        ctx.font = `600 ${labelFontSize}px var(--font-mono)`;
+        ctx.fillStyle = (slotName === 0) ? '#0f172a' : '#64748b';
+        ctx.fillText(slotName.toString(), slotCenterX, slotFloorY + 16);
+
+        // Ball Count below slot name
+        const count = slotCounts[i];
+        ctx.font = `600 ${countFontSize}px var(--font-mono)`;
+        if (count > 0) {
+          const countStr = count.toString();
+          const textWidth = ctx.measureText(countStr).width;
+          const badgeW = Math.max(textWidth + 8, countFontSize + 6);
+          const badgeH = countFontSize + 5;
+          const badgeY = slotFloorY + 31;
+
+          ctx.fillStyle = '#f1f5f9';
+          ctx.strokeStyle = '#cbd5e1';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.roundRect(slotCenterX - badgeW / 2, badgeY - badgeH / 2, badgeW, badgeH, 3);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = '#0f172a';
+          ctx.fillText(countStr, slotCenterX, badgeY);
+        } else {
+          ctx.fillStyle = '#94a3b8';
+          ctx.fillText('0', slotCenterX, slotFloorY + 31);
+        }
+      }
+    }
+
+    // Helper to draw a sleek shaded ball
+    function drawBall(x, y, r) {
+      // Ball body gradient
+      const grad = ctx.createRadialGradient(
+        x - r * 0.35, y - r * 0.35, r * 0.1,
+        x, y, r
+      );
+      grad.addColorStop(0, '#60a5fa'); // light royal blue
+      grad.addColorStop(0.7, '#2563eb'); // primary blue
+      grad.addColorStop(1, '#1d4ed8'); // deep blue
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Subtle drop shadow / rim
+      ctx.strokeStyle = 'rgba(15, 23, 42, 0.15)';
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
+
+      // Specular glint
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+      ctx.beginPath();
+      ctx.arc(x - r * 0.32, y - r * 0.32, r * 0.28, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Animation Loop
+    function loop(currentTime) {
+      const dt = Math.min((currentTime - lastTime) / 1000, 0.035);
+      lastTime = currentTime;
+
+      updatePhysics(dt);
+      render();
+
+      requestAnimationFrame(loop);
+    }
+
+    // Reset Function
+    function resetBoard() {
+      ballsToDrop = 0;
+      timeSinceLastDrop = 0;
+      activeBalls = [];
+      targetSlotDepth = baseSlotDepth;
+      slotDepth = baseSlotDepth;
+      slotFloorY = slotYStart + slotDepth;
+      boardHeight = slotFloorY + 44;
+      initSlotsData();
+      resizeCanvas();
+    }
+
+    // Parameter Synchronizers
+    function setSlots(val) {
+      let n = parseInt(val, 10);
+      if (isNaN(n) || n < 3) n = 3;
+      if (n > 25) n = 25;
+      // Enforce odd number of slots at all times
+      if (n % 2 === 0) {
+        n = (n < numSlots) ? n - 1 : n + 1;
+        if (n < 3) n = 3;
+        if (n > 25) n = 25;
+      }
+      numSlots = n;
+      sliderSlots.value = numSlots;
+      inputSlots.value = numSlots;
+      resetBoard();
+    }
+
+    function setSpeed(val) {
+      let s = parseFloat(val);
+      if (isNaN(s) || s < 0.5) s = 0.5;
+      if (s > 3.0) s = 3.0;
+      dropSpeed = Math.round(s * 10) / 10;
+      sliderSpeed.value = dropSpeed;
+      inputSpeed.value = dropSpeed.toFixed(1);
+    }
+
+    // Event Listeners
+    btnDrop.addEventListener('click', () => {
+      dropBall();
+    });
+
+    btnDrop50.addEventListener('click', () => {
+      queueDrop(50);
+    });
+
+    btnDrop50.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      queueDrop(50);
+    }, { passive: false });
+
+    btnReset.addEventListener('click', () => {
+      resetBoard();
+    });
+
+    // Keyboard shortcut: Spacebar to drop
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
+        e.preventDefault();
+        dropBall();
+      }
+    });
+
+    // Hold down Drop button for continuous drops
+    let dropInterval = null;
+    let holdTimeout = null;
+
+    btnDrop.addEventListener('mousedown', () => {
+      holdTimeout = setTimeout(() => {
+        dropInterval = setInterval(() => {
+          dropBall();
+        }, 140);
+      }, 250);
+    });
+
+    const stopHoldDrop = () => {
+      clearTimeout(holdTimeout);
+      clearInterval(dropInterval);
+    };
+
+    window.addEventListener('mouseup', stopHoldDrop);
+    btnDrop.addEventListener('mouseleave', stopHoldDrop);
+
+    // Touch support for drop button
+    btnDrop.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      dropBall();
+      holdTimeout = setTimeout(() => {
+        dropInterval = setInterval(() => {
+          dropBall();
+        }, 140);
+      }, 250);
+    }, { passive: false });
+
+    btnDrop.addEventListener('touchend', stopHoldDrop);
+
+    // Sliders & Inputs
+    sliderSlots.addEventListener('input', (e) => setSlots(e.target.value));
+    inputSlots.addEventListener('change', (e) => setSlots(e.target.value));
+
+    sliderSpeed.addEventListener('input', (e) => setSpeed(e.target.value));
+    inputSpeed.addEventListener('change', (e) => setSpeed(e.target.value));
+
+    // Responsive window resize
+    const resizeObserver = new ResizeObserver(() => {
+      resizeCanvas();
+    });
+    resizeObserver.observe(container);
+
+    // Initial setup & start loop
+    initSlotsData();
+    resizeCanvas();
+    requestAnimationFrame((t) => {
+      lastTime = t;
+      loop(t);
+    });
+  </script>
+</body>
+
+</html>

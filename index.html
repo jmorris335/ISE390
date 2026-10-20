@@ -199,6 +199,12 @@
         title: "Poisson Distribution",
         description: "Interactive Poisson distribution widget featuring a rate-controlled PMF histogram with fixed axes and a dynamic Binomial vs. Poisson PMF comparison plot.",
         icon: "poisson"
+      },
+      {
+        filename: "plinko.html",
+        title: "Plinko Board",
+        description: "Interactive Plinko board simulator with a triangular peg grid, dynamic deep collection slots that resize to fit tall stacks, and smooth independent ball physics.",
+        icon: "plinko"
       }
     ];
 
@@ -359,6 +365,37 @@
           <line x1="185" y1="60" x2="185" y2="102" stroke="#2563eb" stroke-width="1.2" stroke-dasharray="3 2"/>
           <line x1="140" y1="60" x2="185" y2="60" stroke="#2563eb" stroke-width="1.2" stroke-dasharray="3 2"/>
           <circle cx="185" cy="60" r="3.5" fill="#2563eb"/>
+        </svg>
+      `,
+      plinko: `
+        <svg viewBox="0 0 260 125" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100%" height="100%" fill="#fafafa"/>
+          <!-- Deep slots at bottom -->
+          <line x1="30" y1="105" x2="230" y2="105" stroke="#94a3b8" stroke-width="1.5"/>
+          <line x1="50" y1="75" x2="50" y2="105" stroke="#cbd5e1" stroke-width="1.2"/>
+          <line x1="82" y1="75" x2="82" y2="105" stroke="#cbd5e1" stroke-width="1.2"/>
+          <line x1="114" y1="75" x2="114" y2="105" stroke="#cbd5e1" stroke-width="1.2"/>
+          <line x1="146" y1="75" x2="146" y2="105" stroke="#cbd5e1" stroke-width="1.2"/>
+          <line x1="178" y1="75" x2="178" y2="105" stroke="#cbd5e1" stroke-width="1.2"/>
+          <line x1="210" y1="75" x2="210" y2="105" stroke="#cbd5e1" stroke-width="1.2"/>
+          <!-- Pegs -->
+          <circle cx="130" cy="20" r="2.5" fill="#475569"/>
+          <circle cx="114" cy="33" r="2.5" fill="#475569"/>
+          <circle cx="146" cy="33" r="2.5" fill="#475569"/>
+          <circle cx="98" cy="46" r="2.5" fill="#475569"/>
+          <circle cx="130" cy="46" r="2.5" fill="#475569"/>
+          <circle cx="162" cy="46" r="2.5" fill="#475569"/>
+          <circle cx="82" cy="59" r="2.5" fill="#475569"/>
+          <circle cx="114" cy="59" r="2.5" fill="#475569"/>
+          <circle cx="146" cy="59" r="2.5" fill="#475569"/>
+          <circle cx="178" cy="59" r="2.5" fill="#475569"/>
+          <!-- Falling / bouncing balls -->
+          <circle cx="124" cy="38" r="4.5" fill="#2563eb"/>
+          <circle cx="130" cy="100" r="4.5" fill="#2563eb"/>
+          <circle cx="130" cy="91" r="4.5" fill="#2563eb"/>
+          <circle cx="130" cy="82" r="4.5" fill="#2563eb"/>
+          <circle cx="98" cy="100" r="4.5" fill="#2563eb"/>
+          <circle cx="162" cy="100" r="4.5" fill="#2563eb"/>
         </svg>
       `,
       generic: `
