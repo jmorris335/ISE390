@@ -1,0 +1,1559 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lognormal Distribution</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <!-- KaTeX for Readable Textbook MathType Rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --border-subtle: #f1f5f9;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-light: #dbeafe;
+      --primary-tint: rgba(37, 99, 235, 0.18);
+      --curve-normal: #d97706;
+      --curve-normal-dark: #b45309;
+      --curve-normal-light: #fef3c7;
+      --curve-normal-tint: rgba(217, 119, 6, 0.18);
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      padding: 36px 20px 80px;
+      display: flex;
+      justify-content: center;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1040px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* Navigation Back Link */
+    .nav-bar {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      margin-bottom: -12px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+
+    .back-link:hover {
+      color: var(--text);
+    }
+
+    /* Header */
+    header {
+      margin-bottom: -6px;
+    }
+
+    h1 {
+      font-size: 1.65rem;
+      font-weight: 600;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+    }
+
+    .section-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #0f172a;
+      letter-spacing: -0.01em;
+      margin-bottom: 12px;
+    }
+
+    /* Legend with Selectable Toggle Buttons (Centered above plots) */
+    .legend-bar-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .legend-toggles {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: #fafbfc;
+      border: 1px solid var(--border);
+      border-radius: 9999px;
+      padding: 4px 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .legend-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: 9999px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-muted);
+      font-family: var(--font-sans);
+      font-size: 0.84rem;
+      font-weight: 500;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+    }
+
+    .legend-btn:hover {
+      color: var(--text);
+      background: #f1f5f9;
+    }
+
+    .legend-btn.active.btn-lognormal {
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      border-color: #bfdbfe;
+      font-weight: 600;
+    }
+
+    .legend-btn.active.btn-normal {
+      background: var(--curve-normal-light);
+      color: var(--curve-normal-dark);
+      border-color: #fde68a;
+      font-weight: 600;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+
+    .legend-btn:not(.active) .legend-dot {
+      opacity: 0.35;
+      transform: scale(0.85);
+    }
+
+    .legend-btn.btn-lognormal .legend-dot {
+      background: var(--primary);
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    }
+
+    .legend-btn.btn-normal .legend-dot {
+      background: var(--curve-normal);
+      box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.2);
+    }
+
+    /* Top Panel: Plots Column (Left) & Side Column (Right) */
+    .top-panel-grid {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 20px;
+      align-items: start;
+    }
+
+    @media (max-width: 880px) {
+      .top-panel-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Left: Two Plots Stacked on Top of Each Other */
+    .plots-stacked-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .chart-card {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .chart-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 0 4px;
+    }
+
+    .chart-card-title {
+      font-size: 0.86rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .chart-card-subtitle {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    svg.chart-svg {
+      width: 100%;
+      height: auto;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #fafbfc;
+      display: block;
+    }
+
+    /* Right Side Column */
+    .side-column-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Top Box: Side Calculator for y, z, CDF */
+    .side-calculator {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 16px;
+      background: #fafbfc;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+
+    .calc-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .calc-label {
+      font-size: 0.84rem;
+      font-weight: 500;
+      color: var(--text);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .calc-formula-tag {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .calc-input-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .calc-input-row .slider-input {
+      flex: 1;
+    }
+
+    .calc-input-row .num-input {
+      width: 76px;
+      padding: 6px 8px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      color: #0f172a;
+      background: #ffffff;
+      text-align: right;
+    }
+
+    .calc-stat-box {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .calc-stat-title {
+      font-size: 0.74rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .calc-stat-desc {
+      font-size: 0.77rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .calc-stat-val {
+      font-family: var(--font-mono);
+      font-size: 1.22rem;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .calc-stat-val.val-amber {
+      color: var(--curve-normal-dark);
+    }
+
+    /* Bottom Box: Distinct Shaded Container for Lognormal Mean, Variance, Std Dev */
+    .lognormal-moments-card {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 14px;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+    }
+
+    .moments-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .moments-title {
+      font-size: 0.74rem;
+      font-weight: 600;
+      color: #334155;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .moments-subtitle {
+      font-size: 0.72rem;
+      color: #64748b;
+      font-family: var(--font-mono);
+    }
+
+    .moment-box {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .moment-row-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .moment-label {
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    .moment-formula {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .moment-val {
+      font-family: var(--font-mono);
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--primary-dark);
+    }
+
+    /* Sliders Section */
+    .sliders-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 640px) {
+      .sliders-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .slider-item {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .slider-label {
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .slider-subtext {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .slider-input {
+      flex: 1;
+      height: 7px;
+      border-radius: 4px;
+      background: #e2e8f0;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .slider-input::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+      transition: transform 0.1s, background-color 0.15s;
+    }
+
+    .slider-input::-webkit-slider-thumb:hover {
+      transform: scale(1.12);
+      background: var(--primary-dark);
+    }
+
+    .slider-input::-moz-range-thumb {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .num-input {
+      width: 80px;
+      padding: 6px 8px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      color: #0f172a;
+      background: #ffffff;
+      text-align: right;
+    }
+
+    .num-input:focus,
+    .calc-input-row .num-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px var(--primary-light);
+    }
+
+    /* Formulation Section Below Sliders */
+    .mathtype-section {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 20px;
+      background: #fafbfc;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+
+    .formula-display-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      gap: 24px;
+    }
+
+    .math-block {
+      font-size: 1.15rem;
+      color: #0f172a;
+      text-align: center;
+    }
+
+    /* CSS Fallback if KaTeX is loading */
+    .math-fallback {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 1rem;
+    }
+
+    .math-fallback .frac {
+      display: inline-flex;
+      flex-direction: column;
+      vertical-align: middle;
+      text-align: center;
+      font-size: 0.82rem;
+      line-height: 1.15;
+    }
+
+    .math-fallback .frac .num {
+      border-bottom: 1px solid #334155;
+      padding-bottom: 2px;
+    }
+
+    .math-fallback .frac .den {
+      padding-top: 2px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <!-- Navigation Back Link -->
+    <div class="nav-bar">
+      <a href="../index.html" class="back-link">&larr; Back to Visualizations</a>
+    </div>
+
+    <!-- Header -->
+    <header>
+      <h1>Lognormal Distribution</h1>
+    </header>
+
+    <!-- Part 1: Plots & Side Column (Calculator + Shaded Lognormal Moments) -->
+    <div>
+      <h2 class="section-title">Probability Density & Cumulative Area</h2>
+
+      <!-- Legend Centered Above Plots with Selectable Toggle Buttons -->
+      <div class="legend-bar-container">
+        <div class="legend-toggles">
+          <button id="toggleLognormal" class="legend-btn active btn-lognormal" title="Toggle Lognormal curve">
+            <span class="legend-dot"></span>
+            <span>Lognormal (Y)</span>
+          </button>
+          <button id="toggleNormal" class="legend-btn active btn-normal" title="Toggle Normal curve">
+            <span class="legend-dot"></span>
+            <span>Normal (X)</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="top-panel-grid">
+        <!-- Left: Two Plots Stacked on Top of Each Other -->
+        <div class="plots-stacked-wrapper">
+          <!-- Top Plot: Standard Linear XY Plot -->
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <span class="chart-card-title">Linear Scale</span>
+              <span class="chart-card-subtitle">Standard xy axis</span>
+            </div>
+            <svg id="linearSvg" class="chart-svg" viewBox="0 0 680 270"></svg>
+          </div>
+
+          <!-- Bottom Plot: Log Axis for X Axis -->
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <span class="chart-card-title">Logarithmic Scale</span>
+              <span class="chart-card-subtitle">Log x axis</span>
+            </div>
+            <svg id="logSvg" class="chart-svg" viewBox="0 0 680 270"></svg>
+          </div>
+        </div>
+
+        <!-- Right Side Column: Calculator + Distinct Shaded Lognormal Moments Container -->
+        <div class="side-column-wrapper">
+          <!-- Z-Score and Cumulative Probability Area -->
+          <div class="side-calculator">
+            <div class="calc-row">
+              <div class="calc-label">
+                <span>Input value (y)</span>
+                <span class="calc-formula-tag">y &gt; 0</span>
+              </div>
+              <div class="calc-input-row">
+                <input type="range" id="ySlider" class="slider-input" min="0.1" max="20" step="0.1" value="4.5">
+                <input type="number" id="yInput" class="num-input" min="0.001" step="any" value="4.48">
+              </div>
+            </div>
+
+            <div class="calc-stat-box">
+              <div class="calc-stat-title">Transformed Normal Value</div>
+              <div class="calc-stat-desc">x = ln(y)</div>
+              <div class="calc-stat-val val-amber" id="dispXVal">1.500</div>
+            </div>
+
+            <div class="calc-stat-box">
+              <div class="calc-stat-title">Standardized Score</div>
+              <div class="calc-stat-desc">z = (ln y &minus; &mu;) / &sigma;</div>
+              <div class="calc-stat-val" id="dispZVal">0.000</div>
+            </div>
+
+            <div class="calc-stat-box">
+              <div class="calc-stat-title">Cumulative Probability</div>
+              <div class="calc-stat-desc">&Phi;(z) = P(Y &le; y) = P(X &le; ln y)</div>
+              <div class="calc-stat-val" id="dispCdfVal">0.5000</div>
+            </div>
+          </div>
+
+          <!-- Distinct Shaded Container for Lognormal Mean, Variance, Std Dev -->
+          <div class="lognormal-moments-card">
+            <div class="moments-header">
+              <span class="moments-title">Lognormal Moments</span>
+              <span class="moments-subtitle">Y = exp(X)</span>
+            </div>
+
+            <div class="moment-box">
+              <div class="moment-row-header">
+                <span class="moment-label">Mean (&mu;<sub>Y</sub>)</span>
+                <span class="moment-formula">&mu;<sub>Y</sub> = e<sup>&mu; + &sigma;&sup2;/2</sup></span>
+              </div>
+              <div class="moment-val" id="dispLognMean">5.755</div>
+            </div>
+
+            <div class="moment-box">
+              <div class="moment-row-header">
+                <span class="moment-label">Variance (&sigma;<sub>Y</sub><sup>2</sup>)</span>
+                <span class="moment-formula">&sigma;<sub>Y</sub><sup>2</sup> = (e<sup>&sigma;&sup2;</sup> &minus; 1)e<sup>2&mu; + &sigma;&sup2;</sup></span>
+              </div>
+              <div class="moment-val" id="dispLognVar">21.46</div>
+            </div>
+
+            <div class="moment-box">
+              <div class="moment-row-header">
+                <span class="moment-label">Std Dev (&sigma;<sub>Y</sub>)</span>
+                <span class="moment-formula">&sigma;<sub>Y</sub> = &radic;&sigma;<sub>Y</sub><sup>2</sup></span>
+              </div>
+              <div class="moment-val" id="dispLognSigma">4.633</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Part 2: Two Large Sliders for mu and sigma^2 -->
+    <div>
+      <h2 class="section-title">Distribution Parameters</h2>
+      <div class="sliders-grid">
+        <!-- Slider 1: mu (0.1 to 10) -->
+        <div class="slider-item">
+          <div class="slider-header">
+            <span class="slider-label">Mean of Logarithm (&mu;)</span>
+            <span class="slider-subtext" id="dispMuSliderVal">&mu; = 1.5</span>
+          </div>
+          <div class="slider-row">
+            <input type="range" id="muSlider" class="slider-input" min="0.1" max="10.0" step="0.1" value="1.5">
+            <input type="number" id="muInput" class="num-input" min="0.1" max="10.0" step="0.1" value="1.5">
+          </div>
+        </div>
+
+        <!-- Slider 2: sigma^2 (0.1 to 10) -->
+        <div class="slider-item">
+          <div class="slider-header">
+            <span class="slider-label">Variance of Logarithm (&sigma;<sup>2</sup>)</span>
+            <span class="slider-subtext" id="dispSigmaSqSliderVal">&sigma;<sup>2</sup> = 0.50</span>
+          </div>
+          <div class="slider-row">
+            <input type="range" id="sigmaSqSlider" class="slider-input" min="0.1" max="10.0" step="0.1" value="0.5">
+            <input type="number" id="sigmaSqInput" class="num-input" min="0.1" max="10.0" step="0.1" value="0.5">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Part 3: Formula Below Sliders -->
+    <div>
+      <h2 class="section-title">Lognormal Distribution Formulation</h2>
+      <div class="mathtype-section">
+        <div class="formula-display-row">
+          <div class="math-block" id="formulaMath">
+            <div class="math-fallback">
+              <span>f<sub>Y</sub>(y) = </span>
+              <span class="frac">
+                <span class="num">1</span>
+                <span class="den">y &sigma; &radic;(2&pi;)</span>
+              </span>
+              <span>exp&lpar;&minus;</span>
+              <span class="frac">
+                <span class="num">(ln y &minus; &mu;)<sup>2</sup></span>
+                <span class="den">2&sigma;<sup>2</sup></span>
+              </span>
+              <span>&rpar;, &nbsp; y &gt; 0</span>
+            </div>
+          </div>
+          <div class="math-block" id="relationMath">
+            <div class="math-fallback">
+              <span>Y = e<sup>X</sup> &hArr; X = ln Y, &nbsp; X &sim; N(&mu;, &sigma;<sup>2</sup>)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- Mathematical Functions ---
+
+    // Normal PDF: f_X(x; mu, sigmaSq)
+    function normalPdf(x, mu, sigmaSq) {
+      const sigma = Math.sqrt(Math.max(0.0001, sigmaSq));
+      const coef = 1 / (sigma * Math.sqrt(2 * Math.PI));
+      const expTerm = -0.5 * Math.pow((x - mu) / sigma, 2);
+      return coef * Math.exp(expTerm);
+    }
+
+    // Lognormal PDF: f_Y(y; mu, sigmaSq) for y > 0
+    function lognormalPdf(y, mu, sigmaSq) {
+      if (y <= 0) return 0;
+      const sigma = Math.sqrt(Math.max(0.0001, sigmaSq));
+      const coef = 1 / (y * sigma * Math.sqrt(2 * Math.PI));
+      const expTerm = -0.5 * Math.pow((Math.log(y) - mu) / sigma, 2);
+      return coef * Math.exp(expTerm);
+    }
+
+    // High-precision Error Function erf(x) via Abramowitz & Stegun 7.1.26
+    function erf(x) {
+      const sign = x >= 0 ? 1 : -1;
+      const absX = Math.abs(x);
+      const p = 0.3275911;
+      const a1 = 0.254829592;
+      const a2 = -0.284496736;
+      const a3 = 1.421413741;
+      const a4 = -1.453152027;
+      const a5 = 1.061405429;
+
+      const t = 1.0 / (1.0 + p * absX);
+      const poly = ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t;
+      return sign * (1.0 - poly * Math.exp(-absX * absX));
+    }
+
+    // Standard Normal CDF: Phi(z) = P(Z <= z)
+    function standardNormalCdf(z) {
+      return 0.5 * (1.0 + erf(z / Math.SQRT2));
+    }
+
+    // --- State Variables ---
+    let currentMu = 1.5;
+    let currentSigmaSq = 0.5;
+    let currentY = 4.48; // median e^1.5 approx 4.4817
+    let showLognormal = true;
+    let showNormal = true;
+
+    // DOM Elements
+    const linearSvg = document.getElementById('linearSvg');
+    const logSvg = document.getElementById('logSvg');
+    const muSlider = document.getElementById('muSlider');
+    const muInput = document.getElementById('muInput');
+    const sigmaSqSlider = document.getElementById('sigmaSqSlider');
+    const sigmaSqInput = document.getElementById('sigmaSqInput');
+    const ySlider = document.getElementById('ySlider');
+    const yInput = document.getElementById('yInput');
+
+    const toggleLognormalBtn = document.getElementById('toggleLognormal');
+    const toggleNormalBtn = document.getElementById('toggleNormal');
+
+    const dispMuSliderVal = document.getElementById('dispMuSliderVal');
+    const dispSigmaSqSliderVal = document.getElementById('dispSigmaSqSliderVal');
+
+    const dispXVal = document.getElementById('dispXVal');
+    const dispZVal = document.getElementById('dispZVal');
+    const dispCdfVal = document.getElementById('dispCdfVal');
+
+    const dispLognMean = document.getElementById('dispLognMean');
+    const dispLognVar = document.getElementById('dispLognVar');
+    const dispLognSigma = document.getElementById('dispLognSigma');
+
+    // Toggle Button Event Listeners
+    toggleLognormalBtn.addEventListener('click', () => {
+      if (showLognormal && !showNormal) return;
+      showLognormal = !showLognormal;
+      toggleLognormalBtn.classList.toggle('active', showLognormal);
+      renderPlots();
+    });
+
+    toggleNormalBtn.addEventListener('click', () => {
+      if (showNormal && !showLognormal) return;
+      showNormal = !showNormal;
+      toggleNormalBtn.classList.toggle('active', showNormal);
+      renderPlots();
+    });
+
+    // Format number nicely
+    function formatStat(num) {
+      if (num === 0) return '0.000';
+      if (Math.abs(num) >= 100000 || Math.abs(num) < 0.001) {
+        return num.toExponential(2);
+      }
+      if (Math.abs(num) >= 1000) return num.toFixed(1);
+      if (Math.abs(num) >= 100) return num.toFixed(1);
+      if (Math.abs(num) >= 10) return num.toFixed(2);
+      return num.toFixed(3);
+    }
+
+    // --- Render MathType using KaTeX if available ---
+    function renderMathType() {
+      if (window.katex) {
+        try {
+          katex.render(
+            "f_Y(y) = \\frac{1}{y\\,\\sigma\\sqrt{2\\pi}} \\exp\\left( -\\frac{(\\ln y - \\mu)^2}{2\\sigma^2} \\right), \\quad y > 0",
+            document.getElementById('formulaMath'),
+            { displayMode: false, throwOnError: false }
+          );
+          katex.render(
+            "Y = e^X \\iff X = \\ln Y, \\quad X \\sim \\mathcal{N}(\\mu, \\sigma^2)",
+            document.getElementById('relationMath'),
+            { displayMode: false, throwOnError: false }
+          );
+        } catch (e) {
+          console.warn('KaTeX render error:', e);
+        }
+      }
+    }
+
+    // Try rendering KaTeX on load or shortly after script loads
+    window.addEventListener('DOMContentLoaded', renderMathType);
+    window.addEventListener('load', renderMathType);
+
+    // --- Render Top Plot: Standard Linear XY Plot ---
+    function renderLinearPlot() {
+      while (linearSvg.firstChild) {
+        linearSvg.removeChild(linearSvg.firstChild);
+      }
+
+      const W = 680;
+      const H = 270;
+      const padLeft = 52;
+      const padRight = 20;
+      const padTop = 20;
+      const padBottom = 40;
+      const plotW = W - padLeft - padRight;
+      const plotH = H - padTop - padBottom;
+
+      const sigma = Math.sqrt(Math.max(0.0001, currentSigmaSq));
+
+      // Domain calculation for Linear plot
+      const normMin = currentMu - 3.5 * sigma;
+      const normMax = currentMu + 3.5 * sigma;
+
+      // 98th percentile of lognormal
+      const logn98 = Math.exp(currentMu + 2.054 * sigma);
+      const lognMode = Math.exp(currentMu - currentSigmaSq);
+
+      let xMin = 0;
+      let xMax = 10;
+
+      if (showNormal && !showLognormal) {
+        xMin = Math.min(0, Math.floor(normMin));
+        xMax = Math.ceil(normMax);
+      } else if (!showNormal && showLognormal) {
+        xMin = 0;
+        xMax = Math.max(5, Math.ceil(Math.min(logn98, Math.max(10, currentY * 1.3))));
+      } else {
+        // Both curves visible
+        xMin = Math.min(0, Math.floor(normMin));
+        const rightExtent = Math.max(normMax, Math.min(logn98, Math.max(normMax * 1.5, currentY * 1.3)));
+        xMax = Math.max(8, Math.ceil(rightExtent));
+      }
+
+      if (xMax <= xMin) xMax = xMin + 5;
+
+      // Peak heights for Y scale
+      const peakNormal = normalPdf(currentMu, currentMu, currentSigmaSq);
+      const peakLognormal = (lognMode > 0) ? lognormalPdf(lognMode, currentMu, currentSigmaSq) : 0;
+
+      let maxDensity = 0.1;
+      if (showNormal && showLognormal) {
+        maxDensity = Math.max(peakNormal, peakLognormal);
+      } else if (showNormal) {
+        maxDensity = peakNormal;
+      } else if (showLognormal) {
+        maxDensity = peakLognormal;
+      }
+
+      const yCeil = maxDensity * 1.18;
+
+      const xScale = val => padLeft + ((val - xMin) / (xMax - xMin)) * plotW;
+      const yScale = val => padTop + (1 - Math.min(1.05, val / yCeil)) * plotH;
+
+      // 1. Gridlines and Y-axis Ticks
+      const yStep = yCeil / 4;
+      for (let i = 0; i <= 4; i++) {
+        const val = i * yStep;
+        const yPos = yScale(val);
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', padLeft);
+        line.setAttribute('y1', yPos);
+        line.setAttribute('x2', W - padRight);
+        line.setAttribute('y2', yPos);
+        line.setAttribute('stroke', i === 0 ? '#cbd5e1' : '#f1f5f9');
+        line.setAttribute('stroke-width', i === 0 ? '1.5' : '1');
+        linearSvg.appendChild(line);
+
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        txt.setAttribute('x', padLeft - 8);
+        txt.setAttribute('y', yPos + 4);
+        txt.setAttribute('text-anchor', 'end');
+        txt.setAttribute('font-size', '10.5');
+        txt.setAttribute('fill', '#64748b');
+        txt.setAttribute('font-family', 'var(--font-mono)');
+        txt.textContent = val < 0.1 ? val.toFixed(3) : val.toFixed(2);
+        linearSvg.appendChild(txt);
+      }
+
+      // Y-axis Title: "Probability Density"
+      const yTitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      yTitle.setAttribute('transform', 'rotate(-90)');
+      yTitle.setAttribute('x', -(padTop + plotH / 2));
+      yTitle.setAttribute('y', 15);
+      yTitle.setAttribute('text-anchor', 'middle');
+      yTitle.setAttribute('font-size', '11');
+      yTitle.setAttribute('font-weight', '500');
+      yTitle.setAttribute('fill', '#64748b');
+      yTitle.textContent = 'Probability Density';
+      linearSvg.appendChild(yTitle);
+
+      // 2. X-axis Ticks
+      const rawSpan = xMax - xMin;
+      let tickStep = 1;
+      if (rawSpan > 80) tickStep = 20;
+      else if (rawSpan > 40) tickStep = 10;
+      else if (rawSpan > 20) tickStep = 5;
+      else if (rawSpan > 10) tickStep = 2;
+      else if (rawSpan > 5) tickStep = 1;
+      else tickStep = 0.5;
+
+      const firstTick = Math.ceil(xMin / tickStep) * tickStep;
+      for (let xVal = firstTick; xVal <= xMax; xVal += tickStep) {
+        const xPos = xScale(xVal);
+        if (xPos < padLeft || xPos > W - padRight) continue;
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', xPos);
+        line.setAttribute('y1', padTop);
+        line.setAttribute('x2', xPos);
+        line.setAttribute('y2', padTop + plotH);
+        line.setAttribute('stroke', xVal === 0 ? '#cbd5e1' : '#f8fafc');
+        line.setAttribute('stroke-width', xVal === 0 ? '1.5' : '1');
+        linearSvg.appendChild(line);
+
+        const tickLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        tickLine.setAttribute('x1', xPos);
+        tickLine.setAttribute('y1', padTop + plotH);
+        tickLine.setAttribute('x2', xPos);
+        tickLine.setAttribute('y2', padTop + plotH + 4);
+        tickLine.setAttribute('stroke', '#cbd5e1');
+        tickLine.setAttribute('stroke-width', '1.2');
+        linearSvg.appendChild(tickLine);
+
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        txt.setAttribute('x', xPos);
+        txt.setAttribute('y', padTop + plotH + 16);
+        txt.setAttribute('text-anchor', 'middle');
+        txt.setAttribute('font-size', '10.5');
+        txt.setAttribute('fill', xVal === 0 ? '#0f172a' : '#64748b');
+        txt.setAttribute('font-weight', xVal === 0 ? '600' : '400');
+        txt.setAttribute('font-family', 'var(--font-mono)');
+        txt.textContent = Number.isInteger(xVal) ? xVal.toString() : xVal.toFixed(1);
+        linearSvg.appendChild(txt);
+      }
+
+      // X-axis Title
+      const xTitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      xTitle.setAttribute('x', padLeft + plotW / 2);
+      xTitle.setAttribute('y', H - 8);
+      xTitle.setAttribute('text-anchor', 'middle');
+      xTitle.setAttribute('font-size', '11');
+      xTitle.setAttribute('font-weight', '500');
+      xTitle.setAttribute('fill', '#0f172a');
+      xTitle.textContent = 'Value (t)';
+      linearSvg.appendChild(xTitle);
+
+      const steps = 400;
+      const currentXVal = Math.log(Math.max(1e-6, currentY));
+
+      // 3. Shaded Areas
+      // Normal Shading (up to x = ln y)
+      if (showNormal) {
+        const boundX = Math.min(xMax, Math.max(xMin, currentXVal));
+        if (boundX > xMin) {
+          let shadeNormD = `M ${xScale(xMin)} ${yScale(0)}`;
+          const normSteps = Math.max(10, Math.floor(steps * (boundX - xMin) / (xMax - xMin)));
+          for (let i = 0; i <= normSteps; i++) {
+            const xv = xMin + (boundX - xMin) * (i / normSteps);
+            const yv = normalPdf(xv, currentMu, currentSigmaSq);
+            shadeNormD += ` L ${xScale(xv)} ${yScale(yv)}`;
+          }
+          shadeNormD += ` L ${xScale(boundX)} ${yScale(0)} Z`;
+
+          const shadeNormPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          shadeNormPath.setAttribute('d', shadeNormD);
+          shadeNormPath.setAttribute('fill', 'var(--curve-normal-tint)');
+          linearSvg.appendChild(shadeNormPath);
+        }
+      }
+
+      // Lognormal Shading (from 0 up to y)
+      if (showLognormal) {
+        const boundY = Math.min(xMax, Math.max(0, currentY));
+        if (boundY > 0) {
+          let shadeLognD = `M ${xScale(0)} ${yScale(0)}`;
+          const lognSteps = Math.max(10, Math.floor(steps * boundY / (xMax - xMin)));
+          for (let i = 0; i <= lognSteps; i++) {
+            const yvCoord = 0.0001 + (boundY - 0.0001) * (i / lognSteps);
+            const pdfVal = lognormalPdf(yvCoord, currentMu, currentSigmaSq);
+            shadeLognD += ` L ${xScale(yvCoord)} ${yScale(pdfVal)}`;
+          }
+          shadeLognD += ` L ${xScale(boundY)} ${yScale(0)} Z`;
+
+          const shadeLognPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          shadeLognPath.setAttribute('d', shadeLognD);
+          shadeLognPath.setAttribute('fill', 'var(--primary-tint)');
+          linearSvg.appendChild(shadeLognPath);
+        }
+      }
+
+      // 4. Normal PDF Curve
+      if (showNormal) {
+        let normPathD = '';
+        for (let i = 0; i <= steps; i++) {
+          const xv = xMin + (xMax - xMin) * (i / steps);
+          const yv = normalPdf(xv, currentMu, currentSigmaSq);
+          normPathD += (i === 0 ? 'M ' : ' L ') + xScale(xv) + ' ' + yScale(yv);
+        }
+        const normPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        normPath.setAttribute('d', normPathD);
+        normPath.setAttribute('fill', 'none');
+        normPath.setAttribute('stroke', 'var(--curve-normal)');
+        normPath.setAttribute('stroke-width', '2.2');
+        normPath.setAttribute('stroke-linejoin', 'round');
+        normPath.setAttribute('stroke-linecap', 'round');
+        linearSvg.appendChild(normPath);
+      }
+
+      // 5. Lognormal PDF Curve
+      if (showLognormal) {
+        let lognPathD = '';
+        const startX = Math.max(0.0001, xMin);
+        for (let i = 0; i <= steps; i++) {
+          const yv = startX + (xMax - startX) * (i / steps);
+          const pdfVal = lognormalPdf(yv, currentMu, currentSigmaSq);
+          lognPathD += (i === 0 ? 'M ' : ' L ') + xScale(yv) + ' ' + yScale(pdfVal);
+        }
+        const lognPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        lognPath.setAttribute('d', lognPathD);
+        lognPath.setAttribute('fill', 'none');
+        lognPath.setAttribute('stroke', 'var(--primary)');
+        lognPath.setAttribute('stroke-width', '2.2');
+        lognPath.setAttribute('stroke-linejoin', 'round');
+        lognPath.setAttribute('stroke-linecap', 'round');
+        linearSvg.appendChild(lognPath);
+      }
+
+      // 6. Vertical Markers and Indicator Dots
+      if (showNormal && currentXVal >= xMin && currentXVal <= xMax) {
+        const lineX = xScale(currentXVal);
+        const normYAtCutoff = normalPdf(currentXVal, currentMu, currentSigmaSq);
+        const lineYTop = yScale(normYAtCutoff);
+
+        const vLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        vLine.setAttribute('x1', lineX);
+        vLine.setAttribute('y1', padTop + plotH);
+        vLine.setAttribute('x2', lineX);
+        vLine.setAttribute('y2', lineYTop);
+        vLine.setAttribute('stroke', 'var(--curve-normal-dark)');
+        vLine.setAttribute('stroke-width', '1.6');
+        vLine.setAttribute('stroke-dasharray', '3 3');
+        linearSvg.appendChild(vLine);
+
+        const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        dot.setAttribute('cx', lineX);
+        dot.setAttribute('cy', lineYTop);
+        dot.setAttribute('r', '3.8');
+        dot.setAttribute('fill', 'var(--curve-normal)');
+        dot.setAttribute('stroke', '#ffffff');
+        dot.setAttribute('stroke-width', '1.5');
+        linearSvg.appendChild(dot);
+      }
+
+      if (showLognormal && currentY >= xMin && currentY <= xMax) {
+        const lineY = xScale(currentY);
+        const lognYAtCutoff = lognormalPdf(currentY, currentMu, currentSigmaSq);
+        const lineYTop = yScale(lognYAtCutoff);
+
+        const vLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        vLine.setAttribute('x1', lineY);
+        vLine.setAttribute('y1', padTop + plotH);
+        vLine.setAttribute('x2', lineY);
+        vLine.setAttribute('y2', lineYTop);
+        vLine.setAttribute('stroke', 'var(--primary-dark)');
+        vLine.setAttribute('stroke-width', '1.6');
+        vLine.setAttribute('stroke-dasharray', '3 3');
+        linearSvg.appendChild(vLine);
+
+        const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        dot.setAttribute('cx', lineY);
+        dot.setAttribute('cy', lineYTop);
+        dot.setAttribute('r', '3.8');
+        dot.setAttribute('fill', 'var(--primary)');
+        dot.setAttribute('stroke', '#ffffff');
+        dot.setAttribute('stroke-width', '1.5');
+        linearSvg.appendChild(dot);
+      }
+    }
+
+    // --- Render Bottom Plot: XY Plot with Log Axis for X Axis ---
+    function renderLogPlot() {
+      while (logSvg.firstChild) {
+        logSvg.removeChild(logSvg.firstChild);
+      }
+
+      const W = 680;
+      const H = 270;
+      const padLeft = 52;
+      const padRight = 20;
+      const padTop = 20;
+      const padBottom = 40;
+      const plotW = W - padLeft - padRight;
+      const plotH = H - padTop - padBottom;
+
+      const sigma = Math.sqrt(Math.max(0.0001, currentSigmaSq));
+
+      const minVal = Math.min(Math.exp(currentMu - 3.5 * sigma), Math.max(0.01, currentMu - 3.5 * sigma));
+      const maxVal = Math.max(Math.exp(currentMu + 3.5 * sigma), currentMu + 3.5 * sigma, currentY * 1.5);
+
+      let kMin = Math.floor(Math.log10(Math.max(0.01, minVal)));
+      let kMax = Math.ceil(Math.log10(Math.max(10, maxVal)));
+
+      if (kMax - kMin < 2) kMax = kMin + 2;
+      if (kMin > -1) kMin = -1;
+
+      const logMin = kMin;
+      const logMax = kMax;
+
+      const lognMode = Math.exp(currentMu - currentSigmaSq);
+      const peakNormal = normalPdf(currentMu, currentMu, currentSigmaSq);
+      const peakLognormal = (lognMode > 0) ? lognormalPdf(lognMode, currentMu, currentSigmaSq) : 0;
+
+      let maxDensity = 0.1;
+      if (showNormal && showLognormal) {
+        maxDensity = Math.max(peakNormal, peakLognormal);
+      } else if (showNormal) {
+        maxDensity = peakNormal;
+      } else if (showLognormal) {
+        maxDensity = peakLognormal;
+      }
+
+      const yCeil = maxDensity * 1.18;
+
+      const logScale = t => {
+        if (t <= 0) return padLeft;
+        const logVal = Math.log10(t);
+        const frac = (logVal - logMin) / (logMax - logMin);
+        return padLeft + Math.max(0, Math.min(1, frac)) * plotW;
+      };
+
+      const yScale = val => padTop + (1 - Math.min(1.05, val / yCeil)) * plotH;
+
+      // 1. Gridlines and Y-axis Ticks
+      const yStep = yCeil / 4;
+      for (let i = 0; i <= 4; i++) {
+        const val = i * yStep;
+        const yPos = yScale(val);
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', padLeft);
+        line.setAttribute('y1', yPos);
+        line.setAttribute('x2', W - padRight);
+        line.setAttribute('y2', yPos);
+        line.setAttribute('stroke', i === 0 ? '#cbd5e1' : '#f1f5f9');
+        line.setAttribute('stroke-width', i === 0 ? '1.5' : '1');
+        logSvg.appendChild(line);
+
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        txt.setAttribute('x', padLeft - 8);
+        txt.setAttribute('y', yPos + 4);
+        txt.setAttribute('text-anchor', 'end');
+        txt.setAttribute('font-size', '10.5');
+        txt.setAttribute('fill', '#64748b');
+        txt.setAttribute('font-family', 'var(--font-mono)');
+        txt.textContent = val < 0.1 ? val.toFixed(3) : val.toFixed(2);
+        logSvg.appendChild(txt);
+      }
+
+      // Y-axis Title: "Probability Density"
+      const yTitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      yTitle.setAttribute('transform', 'rotate(-90)');
+      yTitle.setAttribute('x', -(padTop + plotH / 2));
+      yTitle.setAttribute('y', 15);
+      yTitle.setAttribute('text-anchor', 'middle');
+      yTitle.setAttribute('font-size', '11');
+      yTitle.setAttribute('font-weight', '500');
+      yTitle.setAttribute('fill', '#64748b');
+      yTitle.textContent = 'Probability Density';
+      logSvg.appendChild(yTitle);
+
+      // 2. Minor Log Gridlines
+      for (let k = logMin; k < logMax; k++) {
+        const decadeBase = Math.pow(10, k);
+        for (let m = 2; m <= 9; m++) {
+          const subVal = m * decadeBase;
+          const xPos = logScale(subVal);
+
+          const subLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          subLine.setAttribute('x1', xPos);
+          subLine.setAttribute('y1', padTop);
+          subLine.setAttribute('x2', xPos);
+          subLine.setAttribute('y2', padTop + plotH);
+          subLine.setAttribute('stroke', '#f8fafc');
+          subLine.setAttribute('stroke-width', '1');
+          logSvg.appendChild(subLine);
+        }
+      }
+
+      // Major Log Decades Ticks
+      for (let k = logMin; k <= logMax; k++) {
+        const val = Math.pow(10, k);
+        const xPos = logScale(val);
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', xPos);
+        line.setAttribute('y1', padTop);
+        line.setAttribute('x2', xPos);
+        line.setAttribute('y2', padTop + plotH);
+        line.setAttribute('stroke', k === 0 ? '#cbd5e1' : '#f1f5f9');
+        line.setAttribute('stroke-width', '1');
+        logSvg.appendChild(line);
+
+        const tickLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        tickLine.setAttribute('x1', xPos);
+        tickLine.setAttribute('y1', padTop + plotH);
+        tickLine.setAttribute('x2', xPos);
+        tickLine.setAttribute('y2', padTop + plotH + 4);
+        tickLine.setAttribute('stroke', '#cbd5e1');
+        tickLine.setAttribute('stroke-width', '1.2');
+        logSvg.appendChild(tickLine);
+
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        txt.setAttribute('x', xPos);
+        txt.setAttribute('y', padTop + plotH + 16);
+        txt.setAttribute('text-anchor', 'middle');
+        txt.setAttribute('font-size', '10.5');
+        txt.setAttribute('fill', k === 0 ? '#0f172a' : '#64748b');
+        txt.setAttribute('font-weight', k === 0 ? '600' : '400');
+        txt.setAttribute('font-family', 'var(--font-mono)');
+
+        let label = '';
+        if (k === -2) label = '0.01';
+        else if (k === -1) label = '0.1';
+        else if (k === 0) label = '1';
+        else if (k === 1) label = '10';
+        else if (k === 2) label = '100';
+        else if (k === 3) label = '1k';
+        else if (k === 4) label = '10k';
+        else if (k >= 5) label = '10^' + k;
+        else label = Math.pow(10, k).toString();
+
+        txt.textContent = label;
+        logSvg.appendChild(txt);
+      }
+
+      // X-axis Title
+      const xTitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      xTitle.setAttribute('x', padLeft + plotW / 2);
+      xTitle.setAttribute('y', H - 8);
+      xTitle.setAttribute('text-anchor', 'middle');
+      xTitle.setAttribute('font-size', '11');
+      xTitle.setAttribute('font-weight', '500');
+      xTitle.setAttribute('fill', '#0f172a');
+      xTitle.textContent = 'Value (t, log scale)';
+      logSvg.appendChild(xTitle);
+
+      const steps = 400;
+      const tMin = Math.pow(10, logMin);
+      const tMax = Math.pow(10, logMax);
+      const currentXVal = Math.log(Math.max(1e-6, currentY));
+
+      // 3. Shaded Areas on Log Plot
+      if (showNormal && currentXVal > tMin) {
+        const boundX = Math.min(tMax, currentXVal);
+        let shadeNormD = `M ${padLeft} ${yScale(0)}`;
+        const normSteps = 240;
+        for (let i = 0; i <= normSteps; i++) {
+          const logVal = logMin + (Math.log10(boundX) - logMin) * (i / normSteps);
+          const tVal = Math.pow(10, logVal);
+          const yv = normalPdf(tVal, currentMu, currentSigmaSq);
+          shadeNormD += ` L ${logScale(tVal)} ${yScale(yv)}`;
+        }
+        shadeNormD += ` L ${logScale(boundX)} ${yScale(0)} Z`;
+
+        const shadeNormPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        shadeNormPath.setAttribute('d', shadeNormD);
+        shadeNormPath.setAttribute('fill', 'var(--curve-normal-tint)');
+        logSvg.appendChild(shadeNormPath);
+      }
+
+      if (showLognormal && currentY > tMin) {
+        const boundY = Math.min(tMax, currentY);
+        let shadeLognD = `M ${padLeft} ${yScale(0)}`;
+        const lognSteps = 240;
+        for (let i = 0; i <= lognSteps; i++) {
+          const logVal = logMin + (Math.log10(boundY) - logMin) * (i / lognSteps);
+          const tVal = Math.pow(10, logVal);
+          const yv = lognormalPdf(tVal, currentMu, currentSigmaSq);
+          shadeLognD += ` L ${logScale(tVal)} ${yScale(yv)}`;
+        }
+        shadeLognD += ` L ${logScale(boundY)} ${yScale(0)} Z`;
+
+        const shadeLognPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        shadeLognPath.setAttribute('d', shadeLognD);
+        shadeLognPath.setAttribute('fill', 'var(--primary-tint)');
+        logSvg.appendChild(shadeLognPath);
+      }
+
+      // 4. Normal PDF Curve on Log Scale
+      if (showNormal) {
+        let normPathD = '';
+        for (let i = 0; i <= steps; i++) {
+          const logVal = logMin + (logMax - logMin) * (i / steps);
+          const tVal = Math.pow(10, logVal);
+          const yv = normalPdf(tVal, currentMu, currentSigmaSq);
+          normPathD += (i === 0 ? 'M ' : ' L ') + logScale(tVal) + ' ' + yScale(yv);
+        }
+        const normPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        normPath.setAttribute('d', normPathD);
+        normPath.setAttribute('fill', 'none');
+        normPath.setAttribute('stroke', 'var(--curve-normal)');
+        normPath.setAttribute('stroke-width', '2.2');
+        normPath.setAttribute('stroke-linejoin', 'round');
+        normPath.setAttribute('stroke-linecap', 'round');
+        logSvg.appendChild(normPath);
+      }
+
+      // 5. Lognormal PDF Curve on Log Scale
+      if (showLognormal) {
+        let lognPathD = '';
+        for (let i = 0; i <= steps; i++) {
+          const logVal = logMin + (logMax - logMin) * (i / steps);
+          const tVal = Math.pow(10, logVal);
+          const yv = lognormalPdf(tVal, currentMu, currentSigmaSq);
+          lognPathD += (i === 0 ? 'M ' : ' L ') + logScale(tVal) + ' ' + yScale(yv);
+        }
+        const lognPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        lognPath.setAttribute('d', lognPathD);
+        lognPath.setAttribute('fill', 'none');
+        lognPath.setAttribute('stroke', 'var(--primary)');
+        lognPath.setAttribute('stroke-width', '2.2');
+        lognPath.setAttribute('stroke-linejoin', 'round');
+        lognPath.setAttribute('stroke-linecap', 'round');
+        logSvg.appendChild(lognPath);
+      }
+
+      // 6. Vertical Markers and Dots on Log Plot
+      if (showNormal && currentXVal >= tMin && currentXVal <= tMax) {
+        const lineX = logScale(currentXVal);
+        const normY = normalPdf(currentXVal, currentMu, currentSigmaSq);
+        const lineYTop = yScale(normY);
+
+        const vLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        vLine.setAttribute('x1', lineX);
+        vLine.setAttribute('y1', padTop + plotH);
+        vLine.setAttribute('x2', lineX);
+        vLine.setAttribute('y2', lineYTop);
+        vLine.setAttribute('stroke', 'var(--curve-normal-dark)');
+        vLine.setAttribute('stroke-width', '1.6');
+        vLine.setAttribute('stroke-dasharray', '3 3');
+        logSvg.appendChild(vLine);
+
+        const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        dot.setAttribute('cx', lineX);
+        dot.setAttribute('cy', lineYTop);
+        dot.setAttribute('r', '3.8');
+        dot.setAttribute('fill', 'var(--curve-normal)');
+        dot.setAttribute('stroke', '#ffffff');
+        dot.setAttribute('stroke-width', '1.5');
+        logSvg.appendChild(dot);
+      }
+
+      if (showLognormal && currentY >= tMin && currentY <= tMax) {
+        const lineY = logScale(currentY);
+        const lognY = lognormalPdf(currentY, currentMu, currentSigmaSq);
+        const lineYTop = yScale(lognY);
+
+        const vLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        vLine.setAttribute('x1', lineY);
+        vLine.setAttribute('y1', padTop + plotH);
+        vLine.setAttribute('x2', lineY);
+        vLine.setAttribute('y2', lineYTop);
+        vLine.setAttribute('stroke', 'var(--primary-dark)');
+        vLine.setAttribute('stroke-width', '1.6');
+        vLine.setAttribute('stroke-dasharray', '3 3');
+        logSvg.appendChild(vLine);
+
+        const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        dot.setAttribute('cx', lineY);
+        dot.setAttribute('cy', lineYTop);
+        dot.setAttribute('r', '3.8');
+        dot.setAttribute('fill', 'var(--primary)');
+        dot.setAttribute('stroke', '#ffffff');
+        dot.setAttribute('stroke-width', '1.5');
+        logSvg.appendChild(dot);
+      }
+    }
+
+    // Combined Plot Render
+    function renderPlots() {
+      renderLinearPlot();
+      renderLogPlot();
+    }
+
+    // --- Update Calculations & Displays ---
+    function updateCalculations() {
+      const sigma = Math.sqrt(Math.max(0.0001, currentSigmaSq));
+      const lnY = Math.log(Math.max(1e-9, currentY));
+      const z = (lnY - currentMu) / sigma;
+      const cdf = standardNormalCdf(z);
+
+      // Lognormal Distribution Values (Mean, Variance, Std Dev of Y)
+      const meanY = Math.exp(currentMu + currentSigmaSq / 2);
+      const varY = (Math.exp(currentSigmaSq) - 1) * Math.exp(2 * currentMu + currentSigmaSq);
+      const sdY = Math.sqrt(varY);
+
+      // Sliders label updates
+      dispMuSliderVal.textContent = `\u03BC = ${currentMu.toFixed(1)}`;
+      dispSigmaSqSliderVal.textContent = `\u03C3\u00B2 = ${currentSigmaSq.toFixed(2)}`;
+
+      // Side calculator text
+      dispXVal.textContent = lnY.toFixed(3);
+      dispZVal.textContent = (z >= 0 ? '+' : '') + z.toFixed(3);
+      dispCdfVal.textContent = cdf.toFixed(4);
+
+      // Shaded Container: Lognormal moments (mu_Y, sigma_Y^2, sigma_Y)
+      dispLognMean.textContent = formatStat(meanY);
+      dispLognVar.textContent = formatStat(varY);
+      dispLognSigma.textContent = formatStat(sdY);
+
+      // Dynamically adjust ySlider max if y exceeds it
+      const targetMax = Math.max(20, Math.ceil(Math.exp(currentMu + 1.5 * sigma)));
+      if (parseFloat(ySlider.max) !== targetMax) {
+        ySlider.max = targetMax;
+      }
+      ySlider.value = Math.min(targetMax, currentY);
+
+      renderPlots();
+    }
+
+    // --- Parameter Control Handlers ---
+    function setMu(val) {
+      let v = parseFloat(val);
+      if (isNaN(v)) v = 0.1;
+      v = Math.max(0.1, Math.min(10.0, v));
+      currentMu = v;
+      muSlider.value = currentMu;
+      muInput.value = currentMu.toFixed(1);
+      updateCalculations();
+    }
+
+    function setSigmaSq(val) {
+      let v = parseFloat(val);
+      if (isNaN(v)) v = 0.1;
+      v = Math.max(0.1, Math.min(10.0, v));
+      currentSigmaSq = v;
+      sigmaSqSlider.value = currentSigmaSq;
+      sigmaSqInput.value = currentSigmaSq.toFixed(2);
+      updateCalculations();
+    }
+
+    function setY(val) {
+      let v = parseFloat(val);
+      if (isNaN(v) || v <= 0) return;
+      currentY = v;
+      ySlider.value = Math.min(parseFloat(ySlider.max), currentY);
+      yInput.value = currentY < 10 ? currentY.toFixed(2) : currentY.toFixed(1);
+      updateCalculations();
+    }
+
+    // Sliders & Inputs Events
+    muSlider.addEventListener('input', e => setMu(e.target.value));
+    muInput.addEventListener('change', e => setMu(e.target.value));
+
+    sigmaSqSlider.addEventListener('input', e => setSigmaSq(e.target.value));
+    sigmaSqInput.addEventListener('change', e => setSigmaSq(e.target.value));
+
+    ySlider.addEventListener('input', e => {
+      const v = parseFloat(e.target.value);
+      if (!isNaN(v) && v > 0) {
+        currentY = v;
+        yInput.value = currentY < 10 ? currentY.toFixed(2) : currentY.toFixed(1);
+        updateCalculations();
+      }
+    });
+
+    yInput.addEventListener('input', e => {
+      const raw = e.target.value;
+      if (raw === '' || raw === '.') return;
+      const v = parseFloat(raw);
+      if (!isNaN(v) && v > 0) {
+        currentY = v;
+        ySlider.value = Math.min(parseFloat(ySlider.max), currentY);
+        updateCalculations();
+      }
+    });
+
+    yInput.addEventListener('change', e => {
+      const v = parseFloat(e.target.value);
+      if (isNaN(v) || v <= 0) {
+        yInput.value = currentY.toFixed(2);
+      } else {
+        setY(v);
+      }
+    });
+
+    // Window resize handler to maintain crisp SVGs
+    window.addEventListener('resize', renderPlots);
+
+    // Initial calculation and render
+    updateCalculations();
+  </script>
+</body>
+
+</html>
