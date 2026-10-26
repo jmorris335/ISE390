@@ -7,7 +7,7 @@
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   
   <style>
     /* Minimalist & Plain Clean Design System */
@@ -37,7 +37,7 @@
       --accent-gold-bg: #fef3c7;
       
       --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
+      --font-mono: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
     * {
@@ -1167,7 +1167,7 @@
         text.setAttribute('x', margin.left - 8);
         text.setAttribute('y', yPos + 4);
         text.setAttribute('text-anchor', 'end');
-        text.setAttribute('font-family', 'JetBrains Mono');
+        text.setAttribute('font-family', "'Roboto', sans-serif");
         text.setAttribute('font-size', '10px');
         text.setAttribute('fill', '#94a3b8');
         text.textContent = count.toString();
@@ -1196,7 +1196,7 @@
         text.setAttribute('x', xPos);
         text.setAttribute('y', margin.top + plotH + 18);
         text.setAttribute('text-anchor', 'middle');
-        text.setAttribute('font-family', 'JetBrains Mono');
+        text.setAttribute('font-family', "'Roboto', sans-serif");
         text.setAttribute('font-size', '11px');
         text.setAttribute('fill', '#64748b');
         text.textContent = config.type === 'discrete' ? xVal.toString() : xVal.toFixed(0);
@@ -1480,7 +1480,7 @@
         const textLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         textLabel.setAttribute('x', scaleN(25));
         textLabel.setAttribute('y', scaleY(popVariance / 25) - 10);
-        textLabel.setAttribute('font-family', 'JetBrains Mono');
+        textLabel.setAttribute('font-family', "'Roboto', sans-serif");
         textLabel.setAttribute('font-size', '11px');
         textLabel.setAttribute('font-weight', '600');
         textLabel.setAttribute('fill', '#2563eb');
@@ -1552,7 +1552,7 @@
         text.setAttribute('x', margin.left - 8);
         text.setAttribute('y', yPos + 4);
         text.setAttribute('text-anchor', 'end');
-        text.setAttribute('font-family', 'JetBrains Mono');
+        text.setAttribute('font-family', "'Roboto', sans-serif");
         text.setAttribute('font-size', '10px');
         text.setAttribute('fill', '#94a3b8');
         text.textContent = yVal.toFixed(1);
@@ -1583,7 +1583,7 @@
         text.setAttribute('x', xPos);
         text.setAttribute('y', margin.top + plotH + 18);
         text.setAttribute('text-anchor', 'middle');
-        text.setAttribute('font-family', 'JetBrains Mono');
+        text.setAttribute('font-family', "'Roboto', sans-serif");
         text.setAttribute('font-size', '11px');
         text.setAttribute('fill', '#64748b');
         text.textContent = n.toString();
