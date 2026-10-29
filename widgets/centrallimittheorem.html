@@ -1,0 +1,1879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Central Limit Theorem Widget</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* Minimalist & Plain Clean Design System (ISE 390 Standard) */
+    :root {
+      --bg: #ffffff;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --text-light: #94a3b8;
+
+      --border: #e2e8f0;
+      --border-subtle: #f1f5f9;
+      --border-focus: #94a3b8;
+
+      --input-bg: #f8fafc;
+
+      /* Primary Palette */
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-light: #dbeafe;
+      --navy-blue: #1e3a8a;
+
+      /* Distribution Curve & Histogram */
+      --pdf-stroke: #2563eb;
+      --pdf-fill: rgba(37, 99, 235, 0.08);
+      --hist-fill: rgba(59, 130, 246, 0.38);
+      --hist-fill-hover: rgba(30, 64, 175, 0.65);
+      --hist-stroke: #1d4ed8;
+
+      /* Comparison & Indicator Colors */
+      --pop-mean-color: #d97706;        /* Amber for theoretical μ */
+      --sample-mean-color: #2563eb;     /* Blue for sample mean x̄ */
+      --pop-sd-color: #b45309;
+      --sample-sd-color: #1e40af;
+      --clt-purple: #7c3aed;
+
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      padding: 36px 20px 80px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 940px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    /* Navigation Back Link */
+    .nav-bar {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      margin-bottom: -6px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.15s ease;
+    }
+
+    .back-link:hover {
+      color: var(--text);
+    }
+
+    /* Header */
+    header {
+      padding-bottom: 2px;
+    }
+
+    .institution-tag {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    h1 {
+      font-size: 1.7rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+    }
+
+    .intro {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Card */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Distribution Selector Bar Above Plot */
+    .selector-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .selector-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .selector-title {
+      font-size: 0.86rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .dist-params-pill {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 10px;
+      color: var(--text);
+    }
+
+    .dist-buttons-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-dist {
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+      font-weight: 500;
+      padding: 7px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-dist:hover {
+      background: #e2e8f0;
+      border-color: #cbd5e1;
+    }
+
+    .btn-dist.active {
+      background: #0f172a;
+      border-color: #0f172a;
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    .btn-reroll {
+      background: transparent;
+      border: 1px dashed var(--border);
+      color: var(--text-muted);
+      font-family: var(--font-sans);
+      font-size: 0.78rem;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .btn-reroll:hover {
+      background: var(--input-bg);
+      color: var(--text);
+      border-color: var(--border-focus);
+    }
+
+    /* Main Workspace Grid (Plot + Side Controls) */
+    .workspace-grid {
+      display: grid;
+      grid-template-columns: 1fr 220px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    @media (max-width: 820px) {
+      .workspace-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Plot Section */
+    .plot-section {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .plot-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .plot-title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 14px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .swatch-pdf {
+      width: 14px;
+      height: 3px;
+      background: var(--pdf-stroke);
+      border-radius: 2px;
+    }
+
+    .swatch-hist {
+      width: 12px;
+      height: 12px;
+      background: var(--hist-fill);
+      border: 1px solid var(--hist-stroke);
+      border-radius: 2px;
+    }
+
+    .swatch-mu {
+      width: 14px;
+      height: 2px;
+      border-top: 2px dashed var(--pop-mean-color);
+    }
+
+    .swatch-xbar {
+      width: 14px;
+      height: 2.5px;
+      background: var(--sample-mean-color);
+    }
+
+    /* SVG Canvas Wrapper */
+    .svg-wrapper {
+      position: relative;
+      width: 100%;
+      height: 340px;
+      background: #fafbfc;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .svg-plot {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Tooltip */
+    .plot-tooltip {
+      position: absolute;
+      pointer-events: none;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 0.78rem;
+      font-family: var(--font-mono);
+      color: var(--text);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+      z-index: 20;
+      transition: opacity 0.1s ease;
+      white-space: nowrap;
+    }
+
+    .plot-tooltip.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    /* Side Control Panel (Shrunk to top of main plot) */
+    .side-panel {
+      background: #fafbfc;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-self: start;
+    }
+
+    .side-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .side-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    /* Action Draw Buttons */
+    .btn-draw {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--primary);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 0.86rem;
+      font-weight: 600;
+      padding: 9px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.15s ease;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    }
+
+    .btn-draw:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+      border-left-color: var(--navy-blue);
+      transform: translateY(-1px);
+    }
+
+    .btn-draw:active {
+      transform: translateY(0);
+      background: #e2e8f0;
+    }
+
+    .btn-draw .draw-badge {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      background: var(--primary-light);
+      color: var(--navy-blue);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .btn-stream {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      font-weight: 500;
+      padding: 7px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-stream:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+
+    .btn-stream.active {
+      background: #eff6ff;
+      border-color: var(--primary);
+      color: var(--primary-dark);
+      font-weight: 600;
+    }
+
+    .btn-reset {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-family: var(--font-sans);
+      font-size: 0.8rem;
+      font-weight: 500;
+      padding: 7px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-reset:hover {
+      background: #fef2f2;
+      border-color: #fca5a5;
+      color: #b91c1c;
+    }
+
+    /* Counter Badge */
+    .sample-counter-box {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .counter-label {
+      font-size: 0.74rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .counter-val {
+      font-family: var(--font-mono);
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    /* Smaller Nested Comparison Blocks Underneath the Main Plot */
+    .nested-comp-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 2px;
+    }
+
+    @media (max-width: 600px) {
+      .nested-comp-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .nested-comp-card {
+      background: #fafbfc;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .nested-comp-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 5px;
+    }
+
+    .nested-comp-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .nested-comp-diff {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .nested-comp-diff strong {
+      color: var(--text);
+    }
+
+    .nested-comp-body {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .nested-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1px;
+    }
+
+    .nested-stat-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .nested-stat-val {
+      font-family: var(--font-mono);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .nested-stat-val.highlight-mu {
+      color: var(--pop-mean-color);
+    }
+
+    .nested-stat-val.highlight-xbar {
+      color: var(--sample-mean-color);
+    }
+
+    /* Central Limit Theorem Sampling Means Interactive Module */
+    .clt-module {
+      background: #fafbfc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .clt-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .clt-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .clt-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .badge-clt {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: #f3e8ff;
+      color: #6b21a8;
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+
+    .clt-desc {
+      font-size: 0.86rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .clt-workspace-grid {
+      display: grid;
+      grid-template-columns: 1fr 210px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    @media (max-width: 820px) {
+      .clt-workspace-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .clt-plot-section {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-width: 0;
+      width: 100%;
+    }
+
+    .clt-slider-fullwidth {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 9px 14px;
+    }
+
+    .batch-label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .clt-slider {
+      flex: 1;
+      width: 100%;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 6px;
+      border-radius: 3px;
+      background: #e2e8f0;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .clt-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 2px solid var(--clt-purple);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+      cursor: pointer;
+      transition: transform 0.12s ease;
+    }
+
+    .clt-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+      border-color: #6b21a8;
+    }
+
+    .clt-slider::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 2px solid var(--clt-purple);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+      cursor: pointer;
+    }
+
+    .clt-val-badge {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #6b21a8;
+      background: #f3e8ff;
+      border: 1px solid #d8b4fe;
+      border-radius: 5px;
+      padding: 2px 8px;
+      min-width: 38px;
+      text-align: center;
+    }
+
+    .clt-side-panel {
+      background: #fafbfc;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-self: start;
+    }
+
+    .btn-clt-draw-side {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--clt-purple);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 0.86rem;
+      font-weight: 600;
+      padding: 10px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.15s ease;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    }
+
+    .btn-clt-draw-side:hover {
+      background: #fdf4ff;
+      border-color: #d8b4fe;
+      border-left-color: #6b21a8;
+      transform: translateY(-1px);
+    }
+
+    .btn-clt-draw-side:active {
+      transform: translateY(0);
+      background: #f3e8ff;
+    }
+
+    .btn-clt-draw-side .clt-badge {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      background: #f3e8ff;
+      color: #6b21a8;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .clt-plot-wrapper {
+      position: relative;
+      width: 100%;
+      height: 240px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    /* Math Formula Note */
+    .formula-note {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--clt-purple);
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .formula-math {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+
+    <!-- Navigation Back Link -->
+    <div class="nav-bar">
+      <a href="../index.html" class="back-link">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        Back to ISE 390 Widgets
+      </a>
+    </div>
+
+    <!-- Header -->
+    <header>
+      <div class="institution-tag">The University of Alabama in Huntsville • ISE 390</div>
+      <h1>Central Limit Theorem</h1>
+      <p class="intro">
+        Draw samples from diverse continuous distributions and observe empirical sample convergence. The sample histogram overlays the population probability density function (PDF), comparing theoretical parameters (&mu;, &sigma;) with sample statistics (X̄, <em>s</em>).
+      </p>
+    </header>
+
+    <!-- MAIN DISTRIBUTION & SAMPLING CARD -->
+    <div class="card">
+
+      <!-- Buttons Above Plot: Distribution Selectors -->
+      <div class="selector-bar">
+        <div class="selector-header">
+          <span class="selector-title">Select Distribution:</span>
+          <span class="dist-params-pill" id="distParamsBadge">Loading...</span>
+        </div>
+        <div class="dist-buttons-row">
+          <button class="btn-dist active" data-dist="normal">Normal</button>
+          <button class="btn-dist" data-dist="uniform">Uniform</button>
+          <button class="btn-dist" data-dist="skewed">Skewed</button>
+          <button class="btn-dist" data-dist="exponential">Exponential</button>
+          <button class="btn-dist" data-dist="random">Random</button>
+          <button class="btn-reroll hidden" id="btnRerollRandom" title="Re-randomize mixture parameters">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+            </svg>
+            Re-roll
+          </button>
+        </div>
+      </div>
+
+      <!-- Plot Topbar: Title & Legend -->
+      <div class="plot-topbar">
+        <div class="plot-title">
+          <span>Distribution PDF &amp; Sample Histogram</span>
+        </div>
+        <div class="legend-row">
+          <div class="legend-item">
+            <div class="swatch-pdf"></div>
+            <span>PDF <em>f</em>(<em>x</em>)</span>
+          </div>
+          <div class="legend-item">
+            <div class="swatch-hist"></div>
+            <span>Sample Histogram</span>
+          </div>
+          <div class="legend-item">
+            <div class="swatch-mu"></div>
+            <span>&mu; (Pop.)</span>
+          </div>
+          <div class="legend-item">
+            <div class="swatch-xbar"></div>
+            <span>X̄ (Sample)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Workspace Grid: Plot on Left, Controls on Right -->
+      <div class="workspace-grid">
+
+        <!-- Left Column: Large XY Plot (PDF Curve + Histogram in Front) -->
+        <div class="plot-section">
+          <!-- SVG Canvas -->
+          <div class="svg-wrapper" id="mainSvgWrapper">
+            <svg class="svg-plot" id="mainSvg" viewBox="0 0 700 340" preserveAspectRatio="none">
+              <!-- Defs for Gradients & Markers -->
+              <defs>
+                <linearGradient id="pdfGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#2563eb" stop-opacity="0.16"/>
+                  <stop offset="100%" stop-color="#2563eb" stop-opacity="0.01"/>
+                </linearGradient>
+              </defs>
+              <!-- Content rendered dynamically via JS -->
+            </svg>
+            <div class="plot-tooltip hidden" id="mainTooltip"></div>
+          </div>
+
+          <!-- Nested Comparison Blocks for Mean & Standard Deviation -->
+          <div class="nested-comp-grid">
+            <!-- Mean Block -->
+            <div class="nested-comp-card">
+              <div class="nested-comp-header">
+                <span class="nested-comp-title">Mean</span>
+                <span class="nested-comp-diff">|X̄ &minus; &mu;|: <strong id="valMeanDiff">--</strong></span>
+              </div>
+              <div class="nested-comp-body">
+                <div class="nested-stat">
+                  <span class="nested-stat-label">&mu; (Distribution)</span>
+                  <span class="nested-stat-val highlight-mu" id="valTheoMean">50.00</span>
+                </div>
+                <div class="nested-stat">
+                  <span class="nested-stat-label">X̄ (Sample)</span>
+                  <span class="nested-stat-val highlight-xbar" id="valSampleMean">--</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Standard Deviation Block -->
+            <div class="nested-comp-card">
+              <div class="nested-comp-header">
+                <span class="nested-comp-title">Standard Deviation</span>
+                <span class="nested-comp-diff">|<em>s</em> &minus; &sigma;|: <strong id="valSDDiff">--</strong></span>
+              </div>
+              <div class="nested-comp-body">
+                <div class="nested-stat">
+                  <span class="nested-stat-label">&sigma; (Distribution)</span>
+                  <span class="nested-stat-val" id="valTheoSD">12.00</span>
+                </div>
+                <div class="nested-stat">
+                  <span class="nested-stat-label"><em>s</em> (Sample)</span>
+                  <span class="nested-stat-val" id="valSampleSD">--</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Side Control Panel with Sample Buttons (Shrunk to Top of Main Plot) -->
+        <div class="side-panel">
+          <div class="side-group">
+            <span class="side-label">Draw Samples</span>
+            <button class="btn-draw" id="btnDraw1" title="Draw 1 sample from the distribution">
+              <span>+1 Sample</span>
+              <span class="draw-badge">1</span>
+            </button>
+            <button class="btn-draw" id="btnDraw100" title="Draw 100 samples from the distribution">
+              <span>+100 Samples</span>
+              <span class="draw-badge">100</span>
+            </button>
+          </div>
+
+          <div class="side-group">
+            <span class="side-label">Continuous</span>
+            <button class="btn-stream" id="btnStream">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              Auto Stream
+            </button>
+          </div>
+
+          <div class="side-group">
+            <div class="sample-counter-box">
+              <span class="counter-label">Total Sample Size (N)</span>
+              <span class="counter-val" id="sampleCountDisplay">0</span>
+            </div>
+            <button class="btn-reset" id="btnReset">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="1 4 1 10 7 10"></polyline>
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+              </svg>
+              Clear Samples
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- CENTRAL LIMIT THEOREM SAMPLING MODULE (THEORETICAL BELL CURVE DEMO) -->
+    <div class="clt-module">
+      <div class="clt-header">
+        <div class="clt-title-row">
+          <span class="clt-title">Sampling Distribution of the Mean (X̄)</span>
+          <span class="badge-clt">Central Limit Theorem</span>
+        </div>
+      </div>
+      <p class="clt-desc">
+        The Central Limit Theorem proves that the distribution of sample means X̄ of batch size <em>n</em> approaches a Normal distribution &mdash; even when the parent population is uniform, skewed, exponential, or random.
+      </p>
+
+      <!-- CLT Workspace Grid: Full-Width Slider + Plot on Left, Stacked Batch Buttons on Right -->
+      <div class="clt-workspace-grid">
+        <!-- Left Column: Batch Size Slider spanning full width of CLT plot + CLT Means Plot -->
+        <div class="clt-plot-section">
+          <div class="clt-slider-fullwidth">
+            <span class="batch-label">Batch Size (<em>n</em>):</span>
+            <input type="range" class="clt-slider" id="cltNSlider" min="1" max="100" value="30" step="1" title="Adjust sample size n per batch">
+            <span class="clt-val-badge" id="cltNValBadge">30</span>
+          </div>
+
+          <!-- CLT Means Plot SVG -->
+          <div class="clt-plot-wrapper" id="cltSvgWrapper">
+            <svg class="svg-plot" id="cltSvg" viewBox="0 0 700 240" preserveAspectRatio="none">
+              <!-- Rendered dynamically -->
+            </svg>
+            <div class="plot-tooltip hidden" id="cltTooltip"></div>
+          </div>
+        </div>
+
+        <!-- Vertically Stacked Batch Buttons on the Side -->
+        <div class="clt-side-panel">
+          <div class="side-group">
+            <span class="side-label">Draw Batches</span>
+            <button class="btn-clt-draw-side" id="btnCltDraw1" title="Draw 1 batch of size n">
+              <span>+1 Batch</span>
+              <span class="clt-badge">1</span>
+            </button>
+            <button class="btn-clt-draw-side" id="btnCltDraw100" title="Draw 100 batches of size n">
+              <span>+100 Batches</span>
+              <span class="clt-badge">100</span>
+            </button>
+          </div>
+          <button class="btn-reset" id="btnCltReset" title="Clear all recorded batch means">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="1 4 1 10 7 10"></polyline>
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+            </svg>
+            Clear Means
+          </button>
+        </div>
+      </div>
+
+      <div class="formula-note">
+        <span>Theoretical Result: <span class="formula-math">X̄ &sim; &Nscr;(&mu;, &sigma;&sup2; / <em>n</em>)</span></span>
+        <span id="cltStatsSummary">Total batches recorded: 0 &bull; E[X̄] &approx; -- &bull; SE &approx; --</span>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    /* ==========================================================================
+       DISTRIBUTION DEFINITIONS & MATHEMATICAL SAMPLING
+       Domain: x in [0, 100]
+       ========================================================================== */
+
+    const DISTRIBUTIONS = {
+      normal: {
+        name: "Normal",
+        label: "Normal (Gaussian)",
+        mu: 50.0,
+        sigma: 12.0,
+        pdf: function(x) {
+          const s = this.sigma;
+          const u = this.mu;
+          return (1 / (s * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * Math.pow((x - u) / s, 2));
+        },
+        sample: function() {
+          let u1 = 0, u2 = 0;
+          while (u1 === 0) u1 = Math.random();
+          while (u2 === 0) u2 = Math.random();
+          const z = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+          const val = this.mu + z * this.sigma;
+          return Math.max(0, Math.min(100, val));
+        },
+        paramsText: "μ = 50.00, σ = 12.00"
+      },
+
+      uniform: {
+        name: "Uniform",
+        label: "Continuous Uniform",
+        a: 15.0,
+        b: 85.0,
+        get mu() { return (this.a + this.b) / 2; }, // 50.00
+        get sigma() { return (this.b - this.a) / Math.sqrt(12); }, // 20.207
+        pdf: function(x) {
+          if (x >= this.a && x <= this.b) {
+            return 1.0 / (this.b - this.a);
+          }
+          return 0.0;
+        },
+        sample: function() {
+          return this.a + Math.random() * (this.b - this.a);
+        },
+        get paramsText() {
+          return `a = ${this.a}, b = ${this.b} (μ = ${this.mu.toFixed(2)}, σ = ${this.sigma.toFixed(2)})`;
+        }
+      },
+
+      skewed: {
+        name: "Skewed",
+        label: "Right-Skewed Gamma",
+        offset: 10.0,
+        k: 2.0,
+        theta: 14.0,
+        get mu() { return this.offset + this.k * this.theta; }, // 38.00
+        get sigma() { return Math.sqrt(this.k) * this.theta; }, // 19.80
+        pdf: function(x) {
+          if (x < this.offset) return 0.0;
+          const y = x - this.offset;
+          // Gamma(k=2, theta=14): f(y) = (y / 14^2) * exp(-y / 14)
+          return (y / (this.theta * this.theta)) * Math.exp(-y / this.theta);
+        },
+        sample: function() {
+          // Sum of 2 independent exponentials with scale theta
+          let u1 = 0, u2 = 0;
+          while (u1 === 0) u1 = Math.random();
+          while (u2 === 0) u2 = Math.random();
+          const y = -this.theta * Math.log(u1 * u2);
+          const val = this.offset + y;
+          return Math.max(0, Math.min(100, val));
+        },
+        get paramsText() {
+          return `Shifted Gamma (μ = ${this.mu.toFixed(2)}, σ = ${this.sigma.toFixed(2)})`;
+        }
+      },
+
+      exponential: {
+        name: "Exponential",
+        label: "Exponential Decay",
+        offset: 5.0,
+        lambda: 0.04,
+        get mu() { return this.offset + 1.0 / this.lambda; }, // 30.00
+        get sigma() { return 1.0 / this.lambda; },           // 25.00
+        pdf: function(x) {
+          if (x < this.offset) return 0.0;
+          return this.lambda * Math.exp(-this.lambda * (x - this.offset));
+        },
+        sample: function() {
+          let u = 0;
+          while (u === 0) u = Math.random();
+          const y = -Math.log(u) / this.lambda;
+          const val = this.offset + y;
+          return Math.max(0, Math.min(100, val));
+        },
+        get paramsText() {
+          return `λ = 0.04 (μ = ${this.mu.toFixed(2)}, σ = ${this.sigma.toFixed(2)})`;
+        }
+      },
+
+      random: {
+        name: "Random",
+        label: "Arbitrary Mixture",
+        w1: 0.55,
+        mu1: 28.0,
+        sigma1: 8.0,
+        w2: 0.45,
+        mu2: 72.0,
+        sigma2: 10.0,
+        get mu() {
+          return this.w1 * this.mu1 + this.w2 * this.mu2;
+        },
+        get sigma() {
+          const e2 = this.w1 * (this.mu1 * this.mu1 + this.sigma1 * this.sigma1) +
+                     this.w2 * (this.mu2 * this.mu2 + this.sigma2 * this.sigma2);
+          const m = this.mu;
+          return Math.sqrt(Math.max(0.01, e2 - m * m));
+        },
+        pdf: function(x) {
+          const p1 = (1 / (this.sigma1 * Math.sqrt(2 * Math.PI))) *
+                     Math.exp(-0.5 * Math.pow((x - this.mu1) / this.sigma1, 2));
+          const p2 = (1 / (this.sigma2 * Math.sqrt(2 * Math.PI))) *
+                     Math.exp(-0.5 * Math.pow((x - this.mu2) / this.sigma2, 2));
+          return this.w1 * p1 + this.w2 * p2;
+        },
+        sample: function() {
+          const comp = Math.random() < this.w1 ? 1 : 2;
+          const u_c = comp === 1 ? this.mu1 : this.mu2;
+          const s_c = comp === 1 ? this.sigma1 : this.sigma2;
+          let u1 = 0, u2 = 0;
+          while (u1 === 0) u1 = Math.random();
+          while (u2 === 0) u2 = Math.random();
+          const z = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+          const val = u_c + z * s_c;
+          return Math.max(0, Math.min(100, val));
+        },
+        reroll: function() {
+          // Generate an interesting new bimodal mixture
+          this.w1 = 0.4 + Math.random() * 0.25;
+          this.w2 = 1.0 - this.w1;
+          this.mu1 = 20 + Math.random() * 20; // 20 to 40
+          this.mu2 = 65 + Math.random() * 20; // 65 to 85
+          this.sigma1 = 6 + Math.random() * 6;
+          this.sigma2 = 7 + Math.random() * 6;
+        },
+        get paramsText() {
+          return `Bimodal Mixture (μ = ${this.mu.toFixed(2)}, σ = ${this.sigma.toFixed(2)})`;
+        }
+      }
+    };
+
+    /* ==========================================================================
+       APPLICATION STATE
+       ========================================================================== */
+
+    const state = {
+      currentDistKey: 'normal',
+      samples: [],            // Raw samples drawn for main plot
+      cltBatchSize: 30,       // Batch size n for CLT
+      cltMeans: [],           // Recorded means of batches
+      isStreaming: false,     // Continuous stream timer
+      streamTimer: null
+    };
+
+    /* ==========================================================================
+       DOM ELEMENT REFERENCES
+       ========================================================================== */
+
+    const distParamsBadge = document.getElementById('distParamsBadge');
+    const distButtons = document.querySelectorAll('.btn-dist');
+    const btnRerollRandom = document.getElementById('btnRerollRandom');
+
+    const mainSvg = document.getElementById('mainSvg');
+    const mainTooltip = document.getElementById('mainTooltip');
+    const sampleCountDisplay = document.getElementById('sampleCountDisplay');
+
+    const btnDraw1 = document.getElementById('btnDraw1');
+    const btnDraw100 = document.getElementById('btnDraw100');
+    const btnStream = document.getElementById('btnStream');
+    const btnReset = document.getElementById('btnReset');
+
+    const valTheoMean = document.getElementById('valTheoMean');
+    const valSampleMean = document.getElementById('valSampleMean');
+    const valMeanDiff = document.getElementById('valMeanDiff');
+
+    const valTheoSD = document.getElementById('valTheoSD');
+    const valSampleSD = document.getElementById('valSampleSD');
+    const valSDDiff = document.getElementById('valSDDiff');
+
+    // CLT elements
+    const cltNSlider = document.getElementById('cltNSlider');
+    const cltNValBadge = document.getElementById('cltNValBadge');
+    const btnCltDraw1 = document.getElementById('btnCltDraw1');
+    const btnCltDraw100 = document.getElementById('btnCltDraw100');
+    const btnCltReset = document.getElementById('btnCltReset');
+    const cltSvg = document.getElementById('cltSvg');
+    const cltTooltip = document.getElementById('cltTooltip');
+    const cltStatsSummary = document.getElementById('cltStatsSummary');
+
+    /* ==========================================================================
+       STATISTICAL COMPUTATIONS
+       ========================================================================== */
+
+    function computeStats(arr) {
+      const n = arr.length;
+      if (n === 0) {
+        return { n: 0, mean: null, sd: null, se: null };
+      }
+      let sum = 0;
+      for (let i = 0; i < n; i++) sum += arr[i];
+      const mean = sum / n;
+
+      if (n < 2) {
+        return { n, mean, sd: 0, se: 0 };
+      }
+
+      let sumSqDiff = 0;
+      for (let i = 0; i < n; i++) {
+        const diff = arr[i] - mean;
+        sumSqDiff += diff * diff;
+      }
+      const variance = sumSqDiff / (n - 1);
+      const sd = Math.sqrt(variance);
+      const se = sd / Math.sqrt(n);
+
+      return { n, mean, sd, se };
+    }
+
+    /* ==========================================================================
+       HISTOGRAM BINNING
+       ========================================================================== */
+
+    function computeHistogram(data, minX, maxX, numBins) {
+      const binWidth = (maxX - minX) / numBins;
+      const bins = [];
+      for (let i = 0; i < numBins; i++) {
+        const x0 = minX + i * binWidth;
+        const x1 = x0 + binWidth;
+        bins.push({
+          index: i,
+          x0: x0,
+          x1: x1,
+          mid: (x0 + x1) / 2,
+          count: 0,
+          density: 0
+        });
+      }
+
+      const n = data.length;
+      if (n === 0) return { bins, binWidth, maxDensity: 0 };
+
+      for (let i = 0; i < n; i++) {
+        const val = data[i];
+        let idx = Math.floor((val - minX) / binWidth);
+        if (idx < 0) idx = 0;
+        if (idx >= numBins) idx = numBins - 1;
+        bins[idx].count++;
+      }
+
+      let maxDensity = 0;
+      let maxCount = 0;
+      for (let i = 0; i < numBins; i++) {
+        // Density = count / (N * binWidth)
+        bins[i].density = bins[i].count / (n * binWidth);
+        if (bins[i].density > maxDensity) {
+          maxDensity = bins[i].density;
+        }
+        if (bins[i].count > maxCount) {
+          maxCount = bins[i].count;
+        }
+      }
+
+      return { bins, binWidth, maxDensity, maxCount };
+    }
+
+    /* ==========================================================================
+       MAIN SVG PLOT RENDERING: PDF CURVE & OVERLAY HISTOGRAM
+       ========================================================================== */
+
+    function renderMainPlot() {
+      const dist = DISTRIBUTIONS[state.currentDistKey];
+      const width = 700;
+      const height = 340;
+      const margin = { top: 25, right: 30, bottom: 42, left: 56 };
+      const plotWidth = width - margin.left - margin.right;
+      const plotHeight = height - margin.top - margin.bottom;
+
+      const minX = 0;
+      const maxX = 100;
+      const numBins = 32;
+
+      const histData = computeHistogram(state.samples, minX, maxX, numBins);
+      const stats = computeStats(state.samples);
+
+      // Determine Y scale: find peak PDF value
+      let maxPdf = 0;
+      const numPdfPoints = 200;
+      const pdfPoints = [];
+      for (let i = 0; i <= numPdfPoints; i++) {
+        const x = minX + (i / numPdfPoints) * (maxX - minX);
+        const y = dist.pdf(x);
+        if (y > maxPdf) maxPdf = y;
+        pdfPoints.push({ x, y });
+      }
+
+      // Upper Y bound set by PDF peak with 15% headroom
+      const maxY = Math.max(maxPdf * 1.15, 0.035);
+
+      function mapX(x) {
+        return margin.left + ((x - minX) / (maxX - minX)) * plotWidth;
+      }
+
+      function mapY(y) {
+        return margin.top + plotHeight - (y / maxY) * plotHeight;
+      }
+
+      const zeroY = mapY(0);
+
+      // Generate SVG markup
+      let svgHtml = '';
+
+      // Gridlines & Ticks for Y axis
+      const numYTicks = 5;
+      for (let i = 0; i <= numYTicks; i++) {
+        const val = (i / numYTicks) * maxY;
+        const yPos = mapY(val);
+
+        svgHtml += `
+          <line x1="${margin.left}" y1="${yPos}" x2="${width - margin.right}" y2="${yPos}" stroke="#f1f5f9" stroke-width="1"/>
+          <text x="${margin.left - 8}" y="${yPos + 3.5}" fill="#94a3b8" font-size="10" font-family="'Roboto', monospace" text-anchor="end">
+            ${val.toFixed(3)}
+          </text>
+        `;
+      }
+
+      // Gridlines & Ticks for X axis
+      for (let xVal = 0; xVal <= 100; xVal += 10) {
+        const xPos = mapX(xVal);
+        svgHtml += `
+          <line x1="${xPos}" y1="${margin.top}" x2="${xPos}" y2="${zeroY}" stroke="#f8fafc" stroke-width="1"/>
+          <line x1="${xPos}" y1="${zeroY}" x2="${xPos}" y2="${zeroY + 4}" stroke="#cbd5e1" stroke-width="1"/>
+          <text x="${xPos}" y="${zeroY + 16}" fill="#64748b" font-size="10.5" font-family="'Roboto', monospace" text-anchor="middle">
+            ${xVal}
+          </text>
+        `;
+      }
+
+      // X Axis Baseline
+      svgHtml += `
+        <line x1="${margin.left}" y1="${zeroY}" x2="${width - margin.right}" y2="${zeroY}" stroke="#94a3b8" stroke-width="1.2"/>
+        <line x1="${margin.left}" y1="${margin.top}" x2="${margin.left}" y2="${zeroY}" stroke="#94a3b8" stroke-width="1.2"/>
+      `;
+
+      // 1. THEORETICAL PDF CURVE (Rendered underneath / middle)
+      let pathD = `M ${mapX(pdfPoints[0].x)} ${mapY(pdfPoints[0].y)}`;
+      for (let i = 1; i < pdfPoints.length; i++) {
+        pathD += ` L ${mapX(pdfPoints[i].x)} ${mapY(pdfPoints[i].y)}`;
+      }
+
+      // Shaded Area under PDF
+      const areaD = pathD + ` L ${mapX(maxX)} ${zeroY} L ${mapX(minX)} ${zeroY} Z`;
+      svgHtml += `
+        <path d="${areaD}" fill="url(#pdfGrad)"/>
+        <path d="${pathD}" fill="none" stroke="var(--pdf-stroke)" stroke-width="2.4" stroke-linejoin="round"/>
+      `;
+
+      // 2. SAMPLE HISTOGRAM BARS (Tallest bar matches peak height of xy curve)
+      const binW = mapX(minX + histData.binWidth) - mapX(minX);
+      const barSpacing = 1.0;
+      const actualBarWidth = Math.max(1, binW - barSpacing);
+      const curvePeakHeight = zeroY - mapY(maxPdf);
+
+      histData.bins.forEach((bin) => {
+        if (bin.count > 0 && histData.maxCount > 0) {
+          const barX = mapX(bin.x0) + barSpacing / 2;
+          const barHeight = (bin.count / histData.maxCount) * curvePeakHeight;
+          const barTopY = zeroY - barHeight;
+
+          svgHtml += `
+            <rect class="hist-bar"
+                  x="${barX}"
+                  y="${barTopY}"
+                  width="${actualBarWidth}"
+                  height="${barHeight}"
+                  fill="var(--hist-fill)"
+                  stroke="var(--hist-stroke)"
+                  stroke-width="1.1"
+                  rx="1.5"
+                  data-bin-idx="${bin.index}"
+                  data-count="${bin.count}"
+                  data-x0="${bin.x0.toFixed(1)}"
+                  data-x1="${bin.x1.toFixed(1)}"
+                  style="cursor: pointer; transition: fill 0.15s ease;"
+            />
+          `;
+        }
+      });
+
+      // 3. THEORETICAL MEAN LINE (μ)
+      const muX = mapX(dist.mu);
+      if (muX >= margin.left && muX <= width - margin.right) {
+        svgHtml += `
+          <!-- Theoretical Mean Line (Amber Dashed) -->
+          <line x1="${muX}" y1="${margin.top - 6}" x2="${muX}" y2="${zeroY}" stroke="var(--pop-mean-color)" stroke-width="2" stroke-dasharray="4 3"/>
+          <g transform="translate(${muX}, ${margin.top - 7})">
+            <rect x="-24" y="-14" width="48" height="15" rx="3" fill="#fef3c7" stroke="var(--pop-mean-color)" stroke-width="1"/>
+            <text x="0" y="-3" fill="#92400e" font-size="9" font-family="'Roboto', monospace" font-weight="700" text-anchor="middle">
+              μ=${dist.mu.toFixed(1)}
+            </text>
+          </g>
+        `;
+      }
+
+      // 4. SAMPLE MEAN LINE (x̄)
+      if (stats.mean !== null) {
+        const xbarX = mapX(stats.mean);
+        if (xbarX >= margin.left && xbarX <= width - margin.right) {
+          svgHtml += `
+            <!-- Sample Mean Line (Solid Blue) -->
+            <line x1="${xbarX}" y1="${margin.top + 10}" x2="${xbarX}" y2="${zeroY}" stroke="var(--sample-mean-color)" stroke-width="2.4"/>
+            <!-- Triangle Marker at Axis -->
+            <polygon points="${xbarX - 5},${zeroY + 1} ${xbarX + 5},${zeroY + 1} ${xbarX},${zeroY - 7}" fill="var(--sample-mean-color)"/>
+            <g transform="translate(${xbarX}, ${margin.top + 9})">
+              <rect x="-26" y="-14" width="52" height="15" rx="3" fill="#dbeafe" stroke="var(--sample-mean-color)" stroke-width="1"/>
+              <text x="0" y="-3" fill="#1e3a8a" font-size="9.5" font-family="'Roboto', monospace" font-weight="700" text-anchor="middle">
+                X̄=${stats.mean.toFixed(2)}
+              </text>
+            </g>
+          `;
+        }
+      }
+
+      // Y-axis label
+      svgHtml += `
+        <text transform="rotate(-90)" x="${-(margin.top + plotHeight / 2)}" y="${margin.left - 40}" fill="#64748b" font-size="11" font-family="'Inter', sans-serif" font-weight="500" text-anchor="middle">
+          Probability Density f(x)
+        </text>
+        <text x="${margin.left + plotWidth / 2}" y="${height - 8}" fill="#64748b" font-size="11" font-family="'Inter', sans-serif" font-weight="500" text-anchor="middle">
+          Observation Value (x)
+        </text>
+      `;
+
+      mainSvg.innerHTML = svgHtml;
+
+      // Attach hover interactions to histogram bars
+      attachMainTooltipEvents(histData);
+    }
+
+    /* ==========================================================================
+       TOOLTIP INTERACTIONS
+       ========================================================================== */
+
+    function attachMainTooltipEvents(histData) {
+      const bars = mainSvg.querySelectorAll('.hist-bar');
+      bars.forEach(bar => {
+        bar.addEventListener('mouseenter', (e) => {
+          bar.setAttribute('fill', 'var(--hist-fill-hover)');
+          const count = bar.getAttribute('data-count');
+          const density = bar.getAttribute('data-density');
+          const x0 = bar.getAttribute('data-x0');
+          const x1 = bar.getAttribute('data-x1');
+          const totalN = state.samples.length;
+          const pct = ((count / totalN) * 100).toFixed(1);
+
+          mainTooltip.innerHTML = `
+            <strong>Interval [${x0}, ${x1})</strong><br>
+            Count: <strong>${count}</strong> / ${totalN} (${pct}%)
+          `;
+          mainTooltip.classList.remove('hidden');
+          positionTooltip(e, mainTooltip, document.getElementById('mainSvgWrapper'));
+        });
+
+        bar.addEventListener('mousemove', (e) => {
+          positionTooltip(e, mainTooltip, document.getElementById('mainSvgWrapper'));
+        });
+
+        bar.addEventListener('mouseleave', () => {
+          bar.setAttribute('fill', 'var(--hist-fill)');
+          mainTooltip.classList.add('hidden');
+        });
+      });
+    }
+
+    function positionTooltip(event, tooltipEl, wrapperEl) {
+      const rect = wrapperEl.getBoundingClientRect();
+      const x = event.clientX - rect.left + 12;
+      const y = event.clientY - rect.top - 14;
+
+      const ttWidth = tooltipEl.offsetWidth;
+      const safeX = (x + ttWidth > rect.width - 10) ? (x - ttWidth - 24) : x;
+
+      tooltipEl.style.left = `${Math.max(8, safeX)}px`;
+      tooltipEl.style.top = `${Math.max(8, y)}px`;
+    }
+
+    /* ==========================================================================
+       UPDATE METRICS & COMPARISON DASHBOARD
+       ========================================================================== */
+
+    function updateComparisonDashboard() {
+      const dist = DISTRIBUTIONS[state.currentDistKey];
+      const stats = computeStats(state.samples);
+
+      // 1. Counter Display
+      sampleCountDisplay.textContent = state.samples.length.toLocaleString();
+
+      // 2. Theoretical Parameters
+      valTheoMean.textContent = dist.mu.toFixed(2);
+      valTheoSD.textContent = dist.sigma.toFixed(2);
+
+      // 3. Sample Statistics
+      if (stats.mean !== null) {
+        valSampleMean.textContent = stats.mean.toFixed(2);
+        const meanDiff = Math.abs(stats.mean - dist.mu);
+        valMeanDiff.textContent = `${meanDiff.toFixed(2)} (${((meanDiff / dist.mu) * 100).toFixed(1)}%)`;
+      } else {
+        valSampleMean.textContent = '--';
+        valMeanDiff.textContent = '--';
+      }
+
+      if (stats.sd !== null && stats.n >= 2) {
+        valSampleSD.textContent = stats.sd.toFixed(2);
+        const sdDiff = Math.abs(stats.sd - dist.sigma);
+        valSDDiff.textContent = `${sdDiff.toFixed(2)} (${((sdDiff / dist.sigma) * 100).toFixed(1)}%)`;
+      } else {
+        valSampleSD.textContent = '--';
+        valSDDiff.textContent = '--';
+      }
+
+      // 4. Parameter Badge update
+      distParamsBadge.textContent = dist.paramsText;
+    }
+
+    /* ==========================================================================
+       SAMPLE DRAWING ACTIONS
+       ========================================================================== */
+
+    function drawSamples(count) {
+      const dist = DISTRIBUTIONS[state.currentDistKey];
+      for (let i = 0; i < count; i++) {
+        state.samples.push(dist.sample());
+      }
+      renderMainPlot();
+      updateComparisonDashboard();
+    }
+
+    function resetSamples() {
+      state.samples = [];
+      if (state.isStreaming) {
+        toggleStream();
+      }
+      renderMainPlot();
+      updateComparisonDashboard();
+    }
+
+    function toggleStream() {
+      state.isStreaming = !state.isStreaming;
+      if (state.isStreaming) {
+        btnStream.classList.add('active');
+        btnStream.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="6" y="4" width="4" height="16"></rect>
+            <rect x="14" y="4" width="4" height="16"></rect>
+          </svg>
+          Pause Stream
+        `;
+        state.streamTimer = setInterval(() => {
+          drawSamples(5);
+        }, 80);
+      } else {
+        btnStream.classList.remove('active');
+        btnStream.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          Auto Stream
+        `;
+        if (state.streamTimer) {
+          clearInterval(state.streamTimer);
+          state.streamTimer = null;
+        }
+      }
+    }
+
+    /* ==========================================================================
+       CENTRAL LIMIT THEOREM: SAMPLING MEANS MODULE
+       ========================================================================== */
+
+    function drawCltBatches(batchCount) {
+      const dist = DISTRIBUTIONS[state.currentDistKey];
+      const n = state.cltBatchSize;
+
+      for (let b = 0; b < batchCount; b++) {
+        let sum = 0;
+        for (let i = 0; i < n; i++) {
+          sum += dist.sample();
+        }
+        state.cltMeans.push(sum / n);
+      }
+
+      renderCltPlot();
+    }
+
+    function renderCltPlot() {
+      const dist = DISTRIBUTIONS[state.currentDistKey];
+      const width = 700;
+      const height = 240;
+      const margin = { top: 20, right: 30, bottom: 38, left: 56 };
+      const plotWidth = width - margin.left - margin.right;
+      const plotHeight = height - margin.top - margin.bottom;
+
+      const minX = 0;
+      const maxX = 100;
+      const numBins = 38;
+
+      const n = state.cltBatchSize;
+      const theoMean = dist.mu;
+      const theoSE = dist.sigma / Math.sqrt(n);
+
+      const histData = computeHistogram(state.cltMeans, minX, maxX, numBins);
+      const stats = computeStats(state.cltMeans);
+
+      // Normal Bell Curve PDF for X̄: N(mu, sigma / sqrt(n))
+      function cltNormalPdf(x) {
+        return (1 / (theoSE * Math.sqrt(2 * Math.PI))) *
+               Math.exp(-0.5 * Math.pow((x - theoMean) / theoSE, 2));
+      }
+
+      const peakNormalPdf = 1 / (theoSE * Math.sqrt(2 * Math.PI));
+      const maxY = Math.max(peakNormalPdf * 1.15, 0.05);
+
+      function mapX(x) {
+        return margin.left + ((x - minX) / (maxX - minX)) * plotWidth;
+      }
+
+      function mapY(y) {
+        return margin.top + plotHeight - (y / maxY) * plotHeight;
+      }
+
+      const zeroY = mapY(0);
+      const cltCurvePeakHeight = zeroY - mapY(peakNormalPdf);
+
+      let svgHtml = '';
+
+      // Ticks & Gridlines
+      for (let xVal = 0; xVal <= 100; xVal += 10) {
+        const xPos = mapX(xVal);
+        svgHtml += `
+          <line x1="${xPos}" y1="${margin.top}" x2="${xPos}" y2="${zeroY}" stroke="#f8fafc" stroke-width="1"/>
+          <line x1="${xPos}" y1="${zeroY}" x2="${xPos}" y2="${zeroY + 4}" stroke="#cbd5e1" stroke-width="1"/>
+          <text x="${xPos}" y="${zeroY + 16}" fill="#64748b" font-size="10" font-family="'Roboto', monospace" text-anchor="middle">
+            ${xVal}
+          </text>
+        `;
+      }
+
+      svgHtml += `
+        <line x1="${margin.left}" y1="${zeroY}" x2="${width - margin.right}" y2="${zeroY}" stroke="#94a3b8" stroke-width="1.2"/>
+        <line x1="${margin.left}" y1="${margin.top}" x2="${margin.left}" y2="${zeroY}" stroke="#94a3b8" stroke-width="1.2"/>
+      `;
+
+      // 1. Histogram of Sample Means (Tallest bar matches peak of normal curve)
+      const binW = mapX(minX + histData.binWidth) - mapX(minX);
+      const actualBarWidth = Math.max(1, binW - 1.0);
+
+      histData.bins.forEach(bin => {
+        if (bin.count > 0 && histData.maxCount > 0) {
+          const barX = mapX(bin.x0) + 0.5;
+          const barHeight = (bin.count / histData.maxCount) * cltCurvePeakHeight;
+          const barTopY = zeroY - barHeight;
+
+          svgHtml += `
+            <rect class="clt-hist-bar"
+                  x="${barX}"
+                  y="${barTopY}"
+                  width="${actualBarWidth}"
+                  height="${barHeight}"
+                  fill="rgba(124, 58, 237, 0.40)"
+                  stroke="#7c3aed"
+                  stroke-width="1"
+                  rx="1.5"
+                  data-count="${bin.count}"
+                  data-x0="${bin.x0.toFixed(1)}"
+                  data-x1="${bin.x1.toFixed(1)}"
+                  style="cursor: pointer;"
+            />
+          `;
+        }
+      });
+
+      // 2. Theoretical Normal Limit Curve: N(mu, sigma / sqrt(n))
+      const pts = [];
+      const numPts = 180;
+      for (let i = 0; i <= numPts; i++) {
+        const x = minX + (i / numPts) * (maxX - minX);
+        const y = cltNormalPdf(x);
+        pts.push({ x, y });
+      }
+
+      let cltPathD = `M ${mapX(pts[0].x)} ${mapY(pts[0].y)}`;
+      for (let i = 1; i < pts.length; i++) {
+        cltPathD += ` L ${mapX(pts[i].x)} ${mapY(pts[i].y)}`;
+      }
+
+      svgHtml += `
+        <path d="${cltPathD}" fill="none" stroke="#6d28d9" stroke-width="2.5" stroke-linejoin="round"/>
+      `;
+
+      // Mean reference line
+      const muX = mapX(dist.mu);
+      svgHtml += `
+        <line x1="${muX}" y1="${margin.top}" x2="${muX}" y2="${zeroY}" stroke="#475569" stroke-width="1.5" stroke-dasharray="3 3"/>
+      `;
+
+      // Legend in CLT plot
+      svgHtml += `
+        <g transform="translate(${width - margin.right - 180}, ${margin.top + 8})">
+          <rect x="0" y="0" width="175" height="42" rx="4" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+          <line x1="8" y1="14" x2="26" y2="14" stroke="#6d28d9" stroke-width="2.5"/>
+          <text x="32" y="17" fill="#1e293b" font-size="9.5" font-family="'Inter', sans-serif" font-weight="600">CLT Normal Limit</text>
+          <rect x="9" y="24" width="14" height="10" fill="rgba(124, 58, 237, 0.40)" stroke="#7c3aed" stroke-width="1" rx="1"/>
+          <text x="32" y="32" fill="#64748b" font-size="9" font-family="'Inter', sans-serif">Batch Means Histogram</text>
+        </g>
+      `;
+
+      cltSvg.innerHTML = svgHtml;
+
+      // Summary label
+      if (stats.n > 0) {
+        cltStatsSummary.innerHTML = `
+          Batches: <strong>${stats.n.toLocaleString()}</strong> &bull;
+          E[X̄] = <strong>${stats.mean.toFixed(2)}</strong> (&mu; = ${theoMean.toFixed(2)}) &bull;
+          Sample SE = <strong>${stats.sd.toFixed(3)}</strong> (Theo. &sigma;/&radic;${n} = ${theoSE.toFixed(3)})
+        `;
+      } else {
+        cltStatsSummary.innerHTML = `Total batches recorded: 0 &bull; E[X̄] &approx; -- &bull; Theoretical SE = ${theoSE.toFixed(3)}`;
+      }
+
+      // Attach CLT tooltips
+      const cltBars = cltSvg.querySelectorAll('.clt-hist-bar');
+      cltBars.forEach(bar => {
+        bar.addEventListener('mouseenter', (e) => {
+          bar.setAttribute('fill', 'rgba(109, 40, 217, 0.7)');
+          const count = bar.getAttribute('data-count');
+          const density = bar.getAttribute('data-density');
+          const x0 = bar.getAttribute('data-x0');
+          const x1 = bar.getAttribute('data-x1');
+
+          cltTooltip.innerHTML = `
+            <strong>Batch Mean [${x0}, ${x1})</strong><br>
+            Count: <strong>${count}</strong><br>
+            Density: <strong>${density}</strong>
+          `;
+          cltTooltip.classList.remove('hidden');
+          positionTooltip(e, cltTooltip, document.getElementById('cltSvgWrapper'));
+        });
+
+        bar.addEventListener('mousemove', (e) => {
+          positionTooltip(e, cltTooltip, document.getElementById('cltSvgWrapper'));
+        });
+
+        bar.addEventListener('mouseleave', () => {
+          bar.setAttribute('fill', 'rgba(124, 58, 237, 0.40)');
+          cltTooltip.classList.add('hidden');
+        });
+      });
+    }
+
+    /* ==========================================================================
+       EVENT LISTENERS & INITIALIZATION
+       ========================================================================== */
+
+    // Distribution Buttons
+    distButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const distKey = btn.getAttribute('data-dist');
+        if (state.currentDistKey === distKey) return;
+
+        distButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        state.currentDistKey = distKey;
+
+        // Show/hide reroll button for random
+        if (distKey === 'random') {
+          btnRerollRandom.classList.remove('hidden');
+        } else {
+          btnRerollRandom.classList.add('hidden');
+        }
+
+        // Reset samples and CLT means on distribution change
+        state.samples = [];
+        state.cltMeans = [];
+        if (state.isStreaming) toggleStream();
+
+        renderMainPlot();
+        updateComparisonDashboard();
+        renderCltPlot();
+      });
+    });
+
+    btnRerollRandom.addEventListener('click', () => {
+      if (state.currentDistKey === 'random') {
+        DISTRIBUTIONS.random.reroll();
+        state.samples = [];
+        state.cltMeans = [];
+        renderMainPlot();
+        updateComparisonDashboard();
+        renderCltPlot();
+      }
+    });
+
+    // Draw buttons
+    btnDraw1.addEventListener('click', () => drawSamples(1));
+    btnDraw100.addEventListener('click', () => drawSamples(100));
+
+    btnStream.addEventListener('click', toggleStream);
+    btnReset.addEventListener('click', resetSamples);
+
+    // CLT Batch Size Slider
+    cltNSlider.addEventListener('input', () => {
+      state.cltBatchSize = parseInt(cltNSlider.value, 10);
+      cltNValBadge.textContent = state.cltBatchSize;
+      state.cltMeans = [];
+      renderCltPlot();
+    });
+
+    btnCltDraw1.addEventListener('click', () => drawCltBatches(1));
+    btnCltDraw100.addEventListener('click', () => drawCltBatches(100));
+    btnCltReset.addEventListener('click', () => {
+      state.cltMeans = [];
+      renderCltPlot();
+    });
+
+    // Initial Render: Start with 15 initial samples drawn to show the widget alive!
+    drawSamples(15);
+    drawCltBatches(15);
+
+  </script>
+</body>
+</html>
