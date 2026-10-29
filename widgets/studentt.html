@@ -416,10 +416,11 @@
       margin-top: 3px;
     }
 
-    .stat-calc-prob {
-      font-size: 0.8rem;
-      color: var(--text-muted);
+    .stat-calc-ineq {
       font-family: var(--font-mono);
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: #334155;
       margin-top: 3px;
     }
   </style>
@@ -439,8 +440,6 @@
 
     <!-- Part 1: Student's t Plot & Side Panel -->
     <div>
-      <h2 class="section-title">Probability Density & Cumulative Area</h2>
-
       <!-- Toggle Buttons at Top -->
       <div class="legend-bar-container">
         <div class="legend-toggles">
@@ -556,21 +555,24 @@
             <div class="calc-stat-box card-purple">
               <div class="calc-stat-title">Left-Tailed</div>
               <div class="stat-calc-math" id="dispLeftTStat">t<sub>3, &alpha;</sub> = &minus;2.3534</div>
-              <div class="stat-calc-prob" id="dispLeftProb">P(T &le; t) = 0.0500</div>
+              <div class="stat-calc-math" id="dispLeftProbVal">P = 0.0500</div>
+              <div class="stat-calc-ineq" id="dispLeftIneq">P(T &le; t<sub>3, &alpha;</sub>)</div>
             </div>
 
             <!-- Two-Tailed -->
             <div class="calc-stat-box card-blue">
               <div class="calc-stat-title">Two-Tailed (Symmetric)</div>
-              <div class="stat-calc-math" id="dispTwoTStat">t<sub>3, 1&minus;&alpha;/2</sub> = &plusmn;3.1824</div>
-              <div class="stat-calc-prob" id="dispTwoProb">P(&minus;t &le; T &le; t) = 0.9500</div>
+              <div class="stat-calc-math" id="dispTwoTStat">t<sub>3, &alpha;/2</sub> = &plusmn;3.1824</div>
+              <div class="stat-calc-math" id="dispTwoProbVal">P = 0.9500</div>
+              <div class="stat-calc-ineq" id="dispTwoIneq">P(&minus;t<sub>3, &alpha;/2</sub> &le; T &le; t<sub>3, &alpha;/2</sub>)</div>
             </div>
 
             <!-- Right-Tailed -->
             <div class="calc-stat-box card-amber">
               <div class="calc-stat-title">Right-Tailed</div>
               <div class="stat-calc-math" id="dispRightTStat">t<sub>3, 1&minus;&alpha;</sub> = +2.3534</div>
-              <div class="stat-calc-prob" id="dispRightProb">1 &minus; P(T &le; t) = 0.0500</div>
+              <div class="stat-calc-math" id="dispRightProbVal">P = 0.0500</div>
+              <div class="stat-calc-ineq" id="dispRightIneq">1 &minus; P(T &le; t<sub>3, 1&minus;&alpha;</sub>)</div>
             </div>
           </div>
         </div>
@@ -1016,6 +1018,7 @@
       dispNormCdfVal.textContent = normCdf.toFixed(4);
 
       renderPlot();
+      updateCiCalculations();
     }
 
     // --- Toggle Listeners ---
@@ -1131,6 +1134,339 @@
         tSlider.value = currentT;
       }
       updateCalculations();
+    });
+
+    // =========================================================================
+    // Part 2: Confidence Intervals & Critical Values Logic
+    // =========================================================================
+    let currentPct = 95.0;
+    let showLeftTail = true;
+    let showTwoTail = true;
+    let showRightTail = true;
+
+    const ciSvg = document.getElementById('ciSvg');
+    const pctSlider = document.getElementById('pctSlider');
+    const pctInput = document.getElementById('pctInput');
+    const dispPctVal = document.getElementById('dispPctVal');
+    const dispAlphaVal = document.getElementById('dispAlphaVal');
+    const dispLeftTStat = document.getElementById('dispLeftTStat');
+    const dispLeftProbVal = document.getElementById('dispLeftProbVal');
+    const dispLeftIneq = document.getElementById('dispLeftIneq');
+    const dispTwoTStat = document.getElementById('dispTwoTStat');
+    const dispTwoProbVal = document.getElementById('dispTwoProbVal');
+    const dispTwoIneq = document.getElementById('dispTwoIneq');
+    const dispRightTStat = document.getElementById('dispRightTStat');
+    const dispRightProbVal = document.getElementById('dispRightProbVal');
+    const dispRightIneq = document.getElementById('dispRightIneq');
+
+    const toggleLeftBtn = document.getElementById('toggleLeft');
+    const toggleTwoBtn = document.getElementById('toggleTwo');
+    const toggleRightBtn = document.getElementById('toggleRight');
+
+    function updateCiCalculations() {
+      if (!ciSvg) return;
+
+      // alpha = 1 - X / 100 (formula not shown, only value)
+      let rawAlpha = 1.0 - currentPct / 100.0;
+      let alpha = Math.max(0.0001, Math.min(0.9999, rawAlpha));
+
+      dispPctVal.textContent = `X = ${currentPct.toFixed(1)}%`;
+      dispAlphaVal.textContent = rawAlpha.toFixed(4);
+
+      // Left-tailed: t-stat calculated at alpha, probability is CDF up to t-stat
+      const tLeft = studentTInv(alpha, currentNu);
+      const leftProb = studentTCdf(tLeft, currentNu);
+      const leftSign = tLeft < 0 ? '&minus;' : (tLeft > 0 ? '+' : '');
+      dispLeftTStat.innerHTML = `t<sub>${currentNu}, &alpha;</sub> = ${leftSign}${Math.abs(tLeft).toFixed(4)}`;
+      dispLeftProbVal.innerHTML = `P = ${leftProb.toFixed(4)}`;
+      dispLeftIneq.innerHTML = `P(T &le; t<sub>${currentNu}, &alpha;</sub>)`;
+
+      // Two-tailed: t-stat calculated at alpha/2, probability is CDF between t-stats
+      const tTwoHigh = studentTInv(1.0 - alpha / 2.0, currentNu);
+      const tTwoLow = -tTwoHigh;
+      const twoProb = studentTCdf(tTwoHigh, currentNu) - studentTCdf(tTwoLow, currentNu);
+      dispTwoTStat.innerHTML = `t<sub>${currentNu}, &alpha;/2</sub> = &plusmn;${tTwoHigh.toFixed(4)}`;
+      dispTwoProbVal.innerHTML = `P = ${twoProb.toFixed(4)}`;
+      dispTwoIneq.innerHTML = `P(&minus;t<sub>${currentNu}, &alpha;/2</sub> &le; T &le; t<sub>${currentNu}, &alpha;/2</sub>)`;
+
+      // Right-tailed: t-stat calculated at 1-alpha, probability is 1 - CDF up to t-stat
+      const tRight = studentTInv(1.0 - alpha, currentNu);
+      const rightProb = 1.0 - studentTCdf(tRight, currentNu);
+      const rightSign = tRight >= 0 ? '+' : '&minus;';
+      dispRightTStat.innerHTML = `t<sub>${currentNu}, 1&minus;&alpha;</sub> = ${rightSign}${Math.abs(tRight).toFixed(4)}`;
+      dispRightProbVal.innerHTML = `P = ${rightProb.toFixed(4)}`;
+      dispRightIneq.innerHTML = `1 &minus; P(T &le; t<sub>${currentNu}, 1&minus;&alpha;</sub>)`;
+
+      renderCiPlot(tLeft, tTwoLow, tTwoHigh, tRight);
+    }
+
+    function renderCiPlot(tLeft, tTwoLow, tTwoHigh, tRight) {
+      while (ciSvg.firstChild) {
+        ciSvg.removeChild(ciSvg.firstChild);
+      }
+
+      const W = 860;
+      const H = 320;
+      const padLeft = 65;
+      const padRight = 30;
+      const padTop = 25;
+      const padBottom = 50;
+
+      const plotW = W - padLeft - padRight;
+      const plotH = H - padTop - padBottom;
+
+      const xMin = -5;
+      const xMax = 5;
+
+      const yCeil = 0.50;
+      const yTicks = [0.00, 0.10, 0.20, 0.30, 0.40, 0.50];
+
+      const xScale = val => padLeft + ((val - xMin) / (xMax - xMin)) * plotW;
+      const yScale = val => padTop + (1 - val / yCeil) * plotH;
+
+      // 1. Gridlines and Y-axis ticks
+      yTicks.forEach((val, i) => {
+        const yPos = yScale(val);
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', padLeft);
+        line.setAttribute('y1', yPos);
+        line.setAttribute('x2', W - padRight);
+        line.setAttribute('y2', yPos);
+        line.setAttribute('stroke', i === 0 ? '#cbd5e1' : '#f1f5f9');
+        line.setAttribute('stroke-width', i === 0 ? '1.5' : '1');
+        ciSvg.appendChild(line);
+
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        txt.setAttribute('x', padLeft - 10);
+        txt.setAttribute('y', yPos + 4);
+        txt.setAttribute('text-anchor', 'end');
+        txt.setAttribute('font-size', '11');
+        txt.setAttribute('fill', '#64748b');
+        txt.setAttribute('font-family', 'var(--font-mono)');
+        txt.textContent = val.toFixed(2);
+        ciSvg.appendChild(txt);
+      });
+
+      // Y-axis Title: "Probability Density"
+      const yTitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      yTitle.setAttribute('transform', 'rotate(-90)');
+      yTitle.setAttribute('x', -(padTop + plotH / 2));
+      yTitle.setAttribute('y', 18);
+      yTitle.setAttribute('text-anchor', 'middle');
+      yTitle.setAttribute('font-size', '12');
+      yTitle.setAttribute('font-weight', '600');
+      yTitle.setAttribute('fill', '#475569');
+      yTitle.textContent = 'Probability Density';
+      ciSvg.appendChild(yTitle);
+
+      // 2. X-axis ticks
+      for (let xVal = xMin; xVal <= xMax; xVal += 1) {
+        const xPos = xScale(xVal);
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', xPos);
+        line.setAttribute('y1', padTop);
+        line.setAttribute('x2', xPos);
+        line.setAttribute('y2', padTop + plotH);
+        line.setAttribute('stroke', xVal === 0 ? '#e2e8f0' : '#f8fafc');
+        line.setAttribute('stroke-width', '1');
+        ciSvg.appendChild(line);
+
+        const tickLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        tickLine.setAttribute('x1', xPos);
+        tickLine.setAttribute('y1', padTop + plotH);
+        tickLine.setAttribute('x2', xPos);
+        tickLine.setAttribute('y2', padTop + plotH + 5);
+        tickLine.setAttribute('stroke', '#cbd5e1');
+        tickLine.setAttribute('stroke-width', '1.5');
+        ciSvg.appendChild(tickLine);
+
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        txt.setAttribute('x', xPos);
+        txt.setAttribute('y', padTop + plotH + 18);
+        txt.setAttribute('text-anchor', 'middle');
+        txt.setAttribute('font-size', '11');
+        txt.setAttribute('fill', xVal === 0 ? '#0f172a' : '#64748b');
+        txt.setAttribute('font-weight', xVal === 0 ? '600' : '400');
+        txt.setAttribute('font-family', 'var(--font-mono)');
+        txt.textContent = xVal.toString();
+        ciSvg.appendChild(txt);
+      }
+
+      // X-axis Title
+      const xTitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      xTitle.setAttribute('x', padLeft + plotW / 2);
+      xTitle.setAttribute('y', H - 12);
+      xTitle.setAttribute('text-anchor', 'middle');
+      xTitle.setAttribute('font-size', '13');
+      xTitle.setAttribute('font-weight', '600');
+      xTitle.setAttribute('font-style', 'italic');
+      xTitle.setAttribute('fill', '#0f172a');
+      xTitle.textContent = 't';
+      ciSvg.appendChild(xTitle);
+
+      const steps = 300;
+
+      // 3. Shaded Regions in Different Translucent Colors
+      // (a) Two-Tailed Shading (Center: tTwoLow to tTwoHigh) in translucent blue
+      if (showTwoTail) {
+        const boundLow = Math.max(xMin, Math.min(xMax, tTwoLow));
+        const boundHigh = Math.max(xMin, Math.min(xMax, tTwoHigh));
+        if (boundHigh > boundLow) {
+          let twoPathD = `M ${xScale(boundLow)} ${yScale(0)}`;
+          const subSteps = Math.max(10, Math.floor(steps * (boundHigh - boundLow) / (xMax - xMin)));
+          for (let i = 0; i <= subSteps; i++) {
+            const xv = boundLow + (boundHigh - boundLow) * (i / subSteps);
+            const yv = studentTPdf(xv, currentNu);
+            twoPathD += ` L ${xScale(xv)} ${yScale(yv)}`;
+          }
+          twoPathD += ` L ${xScale(boundHigh)} ${yScale(0)} Z`;
+
+          const twoPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          twoPath.setAttribute('d', twoPathD);
+          twoPath.setAttribute('fill', 'rgba(37, 99, 235, 0.20)');
+          ciSvg.appendChild(twoPath);
+        }
+      }
+
+      // (b) Left-Tailed Shading (xMin to tLeft) in translucent purple
+      if (showLeftTail) {
+        const boundLeft = Math.max(xMin, Math.min(xMax, tLeft));
+        if (boundLeft > xMin) {
+          let leftPathD = `M ${xScale(xMin)} ${yScale(0)}`;
+          const subSteps = Math.max(10, Math.floor(steps * (boundLeft - xMin) / (xMax - xMin)));
+          for (let i = 0; i <= subSteps; i++) {
+            const xv = xMin + (boundLeft - xMin) * (i / subSteps);
+            const yv = studentTPdf(xv, currentNu);
+            leftPathD += ` L ${xScale(xv)} ${yScale(yv)}`;
+          }
+          leftPathD += ` L ${xScale(boundLeft)} ${yScale(0)} Z`;
+
+          const leftPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          leftPath.setAttribute('d', leftPathD);
+          leftPath.setAttribute('fill', 'rgba(124, 58, 237, 0.22)');
+          ciSvg.appendChild(leftPath);
+        }
+      }
+
+      // (c) Right-Tailed Shading (tRight to xMax) in translucent amber
+      if (showRightTail) {
+        const boundRight = Math.max(xMin, Math.min(xMax, tRight));
+        if (boundRight < xMax) {
+          let rightPathD = `M ${xScale(boundRight)} ${yScale(0)}`;
+          const subSteps = Math.max(10, Math.floor(steps * (xMax - boundRight) / (xMax - xMin)));
+          for (let i = 0; i <= subSteps; i++) {
+            const xv = boundRight + (xMax - boundRight) * (i / subSteps);
+            const yv = studentTPdf(xv, currentNu);
+            rightPathD += ` L ${xScale(xv)} ${yScale(yv)}`;
+          }
+          rightPathD += ` L ${xScale(xMax)} ${yScale(0)} Z`;
+
+          const rightPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          rightPath.setAttribute('d', rightPathD);
+          rightPath.setAttribute('fill', 'rgba(217, 119, 6, 0.25)');
+          ciSvg.appendChild(rightPath);
+        }
+      }
+
+      // 4. Student's t PDF Curve Path
+      let curvePathD = '';
+      for (let i = 0; i <= steps; i++) {
+        const xVal = xMin + (xMax - xMin) * (i / steps);
+        const yVal = studentTPdf(xVal, currentNu);
+        const px = xScale(xVal);
+        const py = yScale(yVal);
+        curvePathD += (i === 0 ? 'M ' : ' L ') + px + ' ' + py;
+      }
+
+      const curvePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      curvePath.setAttribute('d', curvePathD);
+      curvePath.setAttribute('fill', 'none');
+      curvePath.setAttribute('stroke', '#0f172a');
+      curvePath.setAttribute('stroke-width', '2.4');
+      curvePath.setAttribute('stroke-linejoin', 'round');
+      curvePath.setAttribute('stroke-linecap', 'round');
+      ciSvg.appendChild(curvePath);
+
+      // Helper to draw critical value vertical marker line & dot
+      function drawCriticalMarker(tVal, strokeColor, fillColor) {
+        if (tVal >= xMin && tVal <= xMax) {
+          const lineX = xScale(tVal);
+          const pdfAtT = studentTPdf(tVal, currentNu);
+          const lineYTop = yScale(pdfAtT);
+
+          const vLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          vLine.setAttribute('x1', lineX);
+          vLine.setAttribute('y1', padTop + plotH);
+          vLine.setAttribute('x2', lineX);
+          vLine.setAttribute('y2', lineYTop);
+          vLine.setAttribute('stroke', strokeColor);
+          vLine.setAttribute('stroke-width', '1.8');
+          vLine.setAttribute('stroke-dasharray', '3 3');
+          ciSvg.appendChild(vLine);
+
+          const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          dot.setAttribute('cx', lineX);
+          dot.setAttribute('cy', lineYTop);
+          dot.setAttribute('r', '3.8');
+          dot.setAttribute('fill', fillColor);
+          dot.setAttribute('stroke', '#ffffff');
+          dot.setAttribute('stroke-width', '1.5');
+          ciSvg.appendChild(dot);
+        }
+      }
+
+      // 5. Draw vertical critical value indicators
+      if (showTwoTail) {
+        drawCriticalMarker(tTwoLow, '#2563eb', '#2563eb');
+        drawCriticalMarker(tTwoHigh, '#2563eb', '#2563eb');
+      }
+      if (showLeftTail) {
+        drawCriticalMarker(tLeft, '#7c3aed', '#7c3aed');
+      }
+      if (showRightTail) {
+        drawCriticalMarker(tRight, '#d97706', '#d97706');
+      }
+    }
+
+    // Toggle listeners for CI plot
+    toggleLeftBtn.addEventListener('click', () => {
+      showLeftTail = !showLeftTail;
+      toggleLeftBtn.classList.toggle('active', showLeftTail);
+      updateCiCalculations();
+    });
+
+    toggleTwoBtn.addEventListener('click', () => {
+      showTwoTail = !showTwoTail;
+      toggleTwoBtn.classList.toggle('active', showTwoTail);
+      updateCiCalculations();
+    });
+
+    toggleRightBtn.addEventListener('click', () => {
+      showRightTail = !showRightTail;
+      toggleRightBtn.classList.toggle('active', showRightTail);
+      updateCiCalculations();
+    });
+
+    function setPct(val) {
+      let v = parseFloat(val);
+      if (isNaN(v)) return;
+      v = Math.max(0, Math.min(100, v));
+      currentPct = v;
+      pctSlider.value = currentPct;
+      pctInput.value = currentPct.toFixed(1);
+      updateCiCalculations();
+    }
+
+    pctSlider.addEventListener('input', e => setPct(e.target.value));
+    pctInput.addEventListener('change', e => setPct(e.target.value));
+    pctInput.addEventListener('blur', () => {
+      if (pctInput.value.trim() === '' || isNaN(parseFloat(pctInput.value))) {
+        pctInput.value = currentPct.toFixed(1);
+      } else {
+        setPct(pctInput.value);
+      }
     });
 
     // Initialize display
